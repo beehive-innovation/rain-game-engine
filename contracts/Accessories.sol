@@ -45,6 +45,8 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         address creator;
     }
 
+    address public Admin;
+
     mapping(uint256 => ItemDetails) public items;
     mapping(uint256 => address) pricePointer;
 
@@ -58,6 +60,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
     event ItemUpdated(uint256 _itemId, ItemDetails _item);
     event CreatorAdded(address _addedCreator);
     event CreatorRemoved(address _removedCreator);
+    event AdminChanged(address _admin);
     // EVENTS END
 
     constructor() ERC1155("URI") {
@@ -136,14 +139,14 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         return _state.stack[_state.stackIndex - 1];
     }
 
-    function buyItem(uint256 _itemId, address _paymentToken, uint256 _units) external {
+    function buyItem(uint256 _itemId, uint256 _units) external {
         require(_itemId <= totalItems, "Accessories::buyItem: Invalid ItemId.");
-            require(
-                IERC20(_paymentToken)
-                .allowance(_msgSender(), address(this)) >= getItemPrice(_itemId, _paymentToken, _units), "Accessories::buyItem: Insufficient allowance.");
-            
-            IERC20(_paymentToken).transferFrom(_msgSender(), address(this), getItemPrice(_itemId, _paymentToken, _units));
-            _mint(_msgSender(), _itemId, _units, "");
+        ItemDetails memory item = items[_itemId];
+        for(uint256 i=0;i<item.currencies.length;i=i+1){
+            IERC20 token = IERC20(item.currencies[i]);
+            token.transferFrom(_msgSender(), address(this), getItemPrice(_itemId, address(token), _units));
+        }
+        _mint(_msgSender(), _itemId, _units, "");
     }
 
     function addCreator(address _creator) onlyOwner external {
@@ -157,6 +160,11 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         emit CreatorRemoved(_creator);
     }
 
+    function setAdmin(address _admin) onlyOwner external {
+        require(_admin != address(0), "Accessories::addCreator: Invalid Creator address.");
+        Admin = _admin;
+        emit AdminChanged(_admin);
+    }
 
     function getCreators() external view returns (address[] memory){
         return Creators.values();

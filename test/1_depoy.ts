@@ -52,7 +52,11 @@ describe("Greeter", function () {
   });
 
   it("Should deploy all tokens", async function () {
-    console.log(USDT.address, BNB.address, SOL.address, XRP.address)
+    expect(USDT.address).to.be.not.null;
+    expect(BNB.address).to.be.not.null;
+    expect(SOL.address).to.be.not.null;
+    expect(XRP.address).to.be.not.null;
+    // console.log(USDT.address, BNB.address, SOL.address, XRP.address)
   });
 
   it("Should add creator",async function () {
@@ -126,49 +130,27 @@ describe("Greeter", function () {
 
   it("Should buy Item '1' using USTD.", async function() {
     await USDT.connect(buyer1).mintTokens(1);
-
-    await USDT.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, USDT.address, 1));
-    
-    await accessories.connect(buyer1).buyItem(1, USDT.address,1);
-
-    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
-    expect(await USDT.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-  });
-
-  it("Should buy Item '1' using BNB.", async function() {
     await BNB.connect(buyer1).mintTokens(25);
-
-    await BNB.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, BNB.address, 1));
-    
-    await accessories.connect(buyer1).buyItem(1, BNB.address,1);
-
-    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("2"))
-    expect(await BNB.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-    expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-  });
-
-  it("Should buy Item '1' using SOL.", async function() {
     await SOL.connect(buyer1).mintTokens(50);
-
-    await SOL.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, SOL.address, 1));
-    
-    await accessories.connect(buyer1).buyItem(1, SOL.address,1);
-
-    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("3"))
-    expect(await SOL.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("50" + eighteenZeros))
-    expect(await SOL.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-  });
-
-  it("Should buy Item '1' using XRP.", async function() {
     await XRP.connect(buyer1).mintTokens(75);
 
+    await USDT.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, USDT.address, 1));
+    await BNB.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, BNB.address, 1));
+    await SOL.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, SOL.address, 1));
     await XRP.connect(buyer1).approve(accessories.address, await accessories.getItemPrice(1, XRP.address, 1));
     
-    await accessories.connect(buyer1).buyItem(1, XRP.address,1);
+    await accessories.connect(buyer1).buyItem(1,1);
 
-    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("4"))
+    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+
+    expect(await USDT.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
+    expect(await BNB.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
+    expect(await SOL.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("50" + eighteenZeros))
     expect(await XRP.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("75" + eighteenZeros))
+
+    expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
+    expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
+    expect(await SOL.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
     expect(await XRP.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
   });
 });
