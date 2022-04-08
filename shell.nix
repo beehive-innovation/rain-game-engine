@@ -11,6 +11,10 @@ let
     hardhat node
   '';
 
+  compile = pkgs.writeShellScriptBin "compile" ''
+    hardhat compile
+  '';
+
   local-fork = pkgs.writeShellScriptBin "local-fork" ''
     hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/G0Vg_iZFiAuUD6hjXqcVg-Nys-NGiTQy --fork-block-number 11833335
   '';
@@ -166,6 +170,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.yarn
     pkgs.nodejs-16_x
     pkgs.slither-analyzer
+    compile
     local-node
     local-fork
     local-test
