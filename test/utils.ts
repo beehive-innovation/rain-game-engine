@@ -1,6 +1,8 @@
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 import { StateConfigStruct } from "../typechain/Accessories"
+import { ContractTransaction, Contract, BigNumber } from "ethers";
+import { Result } from "ethers/lib/utils";
 const logger = new Logger(version);
 
 export type VMState = StateConfigStruct;
@@ -66,13 +68,8 @@ export enum AllStandardOps {
   length,
 }
 
-export const OpcodeSale = {
-  ...AllStandardOps,
-  REMAINING_UNITS: 0 + AllStandardOps.length,
-  TOTAL_RESERVE_IN: 1 + AllStandardOps.length,
-  CURRENT_BUY_UNITS: 2 + AllStandardOps.length,
-  TOKEN_ADDRESS: 3 + AllStandardOps.length,
-  RESERVE_ADDRESS: 4 + AllStandardOps.length,
+export const Opcode = {
+  ...AllStandardOps
 };
 
 
@@ -272,4 +269,31 @@ export function concat(items: ReadonlyArray<BytesLike>): Uint8Array {
 
 export function op(code: number, erand = 0): Uint8Array {
   return concat([bytify(code), bytify(erand)]);
+}
+
+export const getEventArgs = async (
+  tx: ContractTransaction,
+  eventName: string,
+  contract: Contract,
+  contractAddressOverride: string = null
+): Promise<Result> => {
+  const address = contractAddressOverride
+    ? contractAddressOverride
+    : contract.address;
+
+  const eventObj = (await tx.wait()).events.find(
+    (x) =>
+      x.topics[0] == contract.filters[eventName]().topics[0] &&
+      x.address == address
+  );
+
+  if (!eventObj) {
+    throw new Error(`Could not find event ${eventName} at address ${address}`);
+  }
+
+  return contract.interface.decodeEventLog(eventName, eventObj.data);
+};
+
+export function BNtoInt(x: BigNumber): number {
+  return parseInt(x._hex);
 }

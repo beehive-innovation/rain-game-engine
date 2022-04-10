@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.10;
 
 import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -8,10 +8,17 @@ import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import '@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol';
+import '@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol';
 import { VMState, StateConfig } from '@beehiveinnovation/rain-protocol/contracts/vm/libraries/VMState.sol';
 
-contract Accessories is ERC1155, Ownable, RainVM, VMState{
+struct AccessoriesConfig {
+    address AccessoriesCreator;
+    string _baseURI;
+}
+
+contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -39,6 +46,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         bool inLootBox;
         uint256 id;
         StateConfig priceConfig;
+        StateConfig canMintConfig;
         address[] currencies;
         uint256 class;
         Rarity rarity;
@@ -49,10 +57,12 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
 
     mapping(uint256 => ItemDetails) public items;
     mapping(uint256 => address) pricePointer;
+    mapping(uint256 => address) canMintPointer;
 
     string BaseURI = "";
 
     // EVENTS
+    event Initialize(AccessoriesConfig config);
     event BaseURIChanged(string _baseURI);
     event ClassCreated(uint256 _classId, string[] _attributes);
     event ClassRemoved(uint256 _classId);
@@ -63,8 +73,24 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
     event AdminChanged(address _admin);
     // EVENTS END
 
+    modifier canMint(uint256 _itemId) {
+        ItemDetails memory item = items[_itemId];
+        // for(uint256 i=0;i<item.canMintConfig.sources.length;i=i+1){
+            State memory _state = _restore(canMintPointer[_itemId]);
+            eval("", _state, 0);
+            console.log("Script : ", (_state.stack[_state.stackIndex - 1]));
+            // require(_state.stack[_state.stackIndex - 1] > 1, "Accessories::canMint: Address does not satisfy the mint Conditions.");
+        // }
+        _;
+    }
+
     constructor() ERC1155("URI") {
         console.log("Deploying a ERC1155 Contract");
+    }
+
+    function initialize(AccessoriesConfig memory _config) external initializer {
+        BaseURI = _config._baseURI;
+        emit Initialize(_config);
     }
 
     function setBaseURI(string memory _baseURI) external onlyOwner{
@@ -87,7 +113,14 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         emit ClassRemoved(_class);
     }
 
-    function newItem(bool _inLootBox, StateConfig memory _priceConfig, address[] memory _paymentTokens, uint8 _class, uint8 _rarity) external {
+    function newItem(
+        bool _inLootBox,
+        StateConfig memory _priceConfig,
+        StateConfig memory _canMintConfig,
+        address[] memory _paymentTokens,
+        uint8 _class,
+        uint8 _rarity
+    ) external {
         require(Creators.contains(_msgSender()), "Accessories:newItem: Only Creators can create items");
         totalItems = totalItems.add(1);
         
@@ -95,6 +128,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
             _inLootBox,
             totalItems,
             _priceConfig,
+            _canMintConfig,
             _paymentTokens,
             getClass(_class),
             getRarity(_rarity),
@@ -102,20 +136,31 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         );
 
         pricePointer[totalItems] = _snapshot(_newState(_priceConfig));
+        canMintPointer[totalItems] = _snapshot(_newState(_canMintConfig));
 
         emit ItemCreated(totalItems, items[totalItems]);
     }
 
-    function updateItem(uint256 _itemId, bool _inLootBox, StateConfig memory _priceConfig, address[] memory _paymentTokens, uint8 _class, uint8 _rarity) external {
+    function updateItem(
+        uint256 _itemId,
+        bool _inLootBox,
+        StateConfig memory _priceConfig,
+        StateConfig memory _canMintConfig,
+        address[] memory _paymentTokens,
+        uint8 _class,
+        uint8 _rarity
+    ) external {
         require(_msgSender() == items[_itemId].creator, "Accessories::updateItem: Only Creator can update the ItemDetails.");
 
         items[_itemId].inLootBox = _inLootBox;
         items[_itemId].priceConfig = _priceConfig;
+        items[_itemId].canMintConfig = _canMintConfig;
         items[_itemId].currencies = _paymentTokens;
         items[_itemId].class = getClass(_class);
         items[_itemId].rarity = getRarity(_rarity);
 
         pricePointer[_itemId] = _snapshot(_newState(_priceConfig));
+        canMintPointer[_itemId] = _snapshot(_newState(_canMintConfig));
         
         emit ItemUpdated(totalItems, items[totalItems]);
     }
@@ -139,7 +184,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
         return _state.stack[_state.stackIndex - 1];
     }
 
-    function buyItem(uint256 _itemId, uint256 _units) external {
+    function buyItem(uint256 _itemId, uint256 _units) external canMint(_itemId){
         require(_itemId <= totalItems, "Accessories::buyItem: Invalid ItemId.");
         ItemDetails memory item = items[_itemId];
         for(uint256 i=0;i<item.currencies.length;i=i+1){
@@ -186,5 +231,10 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState{
 
     function withdraw(address _tokenAddress) public onlyOwner{
         IERC20(_tokenAddress).transfer(owner(), IERC20(_tokenAddress).balanceOf(address(this)));
+    }
+
+    function getReport(address _tier, address _account) public view returns(uint256) {
+        console.log("Solidity : ", ITier(_tier).report(_account));
+        return ITier(_tier).report(_account);
     }
 }

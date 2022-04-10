@@ -1,18 +1,28 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { artifacts ,ethers } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
 import type { Accessories } from "../typechain/Accessories"
 import type { Token } from "../typechain/Token"
+import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
 
-import { eighteenZeros, op, OpcodeSale, Rarity, concat, VMState } from "./utils"
+import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs } from "./utils"
+import { Contract } from "ethers";
+
+const LEVELS = Array.from(Array(8).keys()).map((value) =>
+  ethers.BigNumber.from(++value + eighteenZeros)
+); // [1,2,3,4,5,6,7,8]
 
 export let accessories: Accessories
 export let USDT: Token
 export let BNB: Token
 export let SOL: Token
 export let XRP: Token
+export let rTKN: Token
+
+export let erc20BalanceTier: ERC20BalanceTier
 
 export let owner: SignerWithAddress,
   creator: SignerWithAddress,
@@ -43,9 +53,34 @@ before("Deploy Accessories Contract and subgraph", async function () {
   await SOL.deployed();
   XRP = await Erc20.deploy("Ripple", "XRP");
   await XRP.deployed();
+
+  rTKN = await Erc20.deploy("Rain Token", "rTKN");
+  await rTKN.deployed()
+
+  const erc20BalanceTierFactoryFactory = await ethers.getContractFactory("ERC20BalanceTierFactory");
+  const erc20BalanceTierFactory = (await erc20BalanceTierFactoryFactory.deploy()) as ERC20BalanceTierFactory & Contract;
+  await erc20BalanceTierFactory.deployed()
+
+  const tx = await erc20BalanceTierFactory.createChildTyped({
+    erc20: rTKN.address,
+    tierValues: LEVELS
+  });
+
+  erc20BalanceTier = new ethers.Contract(
+    ethers.utils.hexZeroPad(
+      ethers.utils.hexStripZeros(
+        (await getEventArgs(tx, "NewChild", erc20BalanceTierFactory)).child
+      ),
+      20
+    ),
+    (await artifacts.readArtifact("ERC20BalanceTier")).abi,
+    owner
+  ) as ERC20BalanceTier & Contract;
+
+  await erc20BalanceTier.deployed();
 })
 
-describe("Greeter", function () {
+describe("Accessories Test", function () {
   it("Contract should be deployed.", async function () {
     expect(accessories.address).to.be.not.null;
     expect(await accessories.owner()).to.equals(owner.address);
@@ -76,10 +111,10 @@ describe("Greeter", function () {
     const expectedXRPPrice = ethers.BigNumber.from("75" + eighteenZeros);
 
     const constants = [expectedUSDTPrice, expectedBNBPrice, expectedSOLPrice, expectedXRPPrice];
-    const USDTPriceIndex = concat([op(OpcodeSale.VAL, 0)]);
-    const BNBPriceIndex = concat([op(OpcodeSale.VAL, 1)]);
-    const SOLPriceIndex = concat([op(OpcodeSale.VAL, 2)]);
-    const XRPPriceIndex = concat([op(OpcodeSale.VAL, 3)]);
+    const USDTPriceIndex = concat([op(Opcode.VAL, 0)]);
+    const BNBPriceIndex = concat([op(Opcode.VAL, 1)]);
+    const SOLPriceIndex = concat([op(Opcode.VAL, 2)]);
+    const XRPPriceIndex = concat([op(Opcode.VAL, 3)]);
 
     const sources = [USDTPriceIndex, BNBPriceIndex, SOLPriceIndex, XRPPriceIndex];
 
@@ -93,7 +128,26 @@ describe("Greeter", function () {
     const currencies = [USDT.address, BNB.address, SOL.address, XRP.address]
     await accessories.createClass(["A", "B"]);
 
-    await accessories.connect(creator).newItem(false, priceConfig, currencies , 1, Rarity.NONE);
+    const canMintConstants = [ erc20BalanceTier.address ]
+
+    const TierAddressOP = op(Opcode.VAL, 0)
+    const SenderOP = op(Opcode.SENDER)
+    const ReportOP = op(Opcode.REPORT)
+
+    const canMintConfig: VMState = {
+      sources: [
+        concat([
+          SenderOP,
+          TierAddressOP,
+          ReportOP
+        ])
+      ],
+      constants: canMintConstants,
+      stackLength: 3,
+      argumentsLength: 0,
+    }
+
+    await accessories.connect(creator).newItem(false, priceConfig, canMintConfig, currencies , 1, Rarity.NONE);
 
     let ItemData = await accessories.items(1)
 
@@ -128,7 +182,18 @@ describe("Greeter", function () {
     // console.log({priceXRP})
   });
 
-  it("Should buy Item '1' using USTD.", async function() {
+  it("Should buy Item '1'", async function() {
+    // console.log("Before Balance : ", await rTKN.balanceOf(buyer1.address))
+    // console.log("Before Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
+    await rTKN.connect(buyer1).mintTokens(1)
+    // console.log("After Balance : ", await rTKN.balanceOf(buyer1.address))
+    // console.log("After Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
+    // await rTKN.connect(buyer1).mintTokens(1)
+    // console.log("After Balance : ", await rTKN.balanceOf(buyer1.address))
+    // console.log("After Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
+    // console.log("Script Tier Level : ", (await erc20BalanceTier.report(buyer1.address)))
+    console.log("Solidity Tier Level : ", (await accessories.getReport(erc20BalanceTier.address, buyer1.address)))
+
     await USDT.connect(buyer1).mintTokens(1);
     await BNB.connect(buyer1).mintTokens(25);
     await SOL.connect(buyer1).mintTokens(50);
