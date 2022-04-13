@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
 import "hardhat/console.sol";
@@ -11,10 +11,12 @@ import '@openzeppelin/contracts/utils/Strings.sol';
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import '@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol';
 import '@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol';
+import '@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol';
 import { VMState, StateConfig } from '@beehiveinnovation/rain-protocol/contracts/vm/libraries/VMState.sol';
+import { AllStandardOps, ALL_STANDARD_OPS_START, ALL_STANDARD_OPS_LENGTH } from '@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol';
 
 struct AccessoriesConfig {
-    address AccessoriesCreator;
+    address _accessoriesCreator;
     string _baseURI;
 }
 
@@ -23,6 +25,12 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
     using Strings for uint256;
+
+    uint256 internal constant LOCAL_OP_TIER_REPORT_AT_BLOCK = 0;
+
+    uint256 internal constant LOCAL_OPS_LENGTH = 1;
+
+    uint256 private immutable localOpsStart;
 
     enum Rarity {
         NONE,
@@ -45,8 +53,8 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     struct ItemDetails {
         bool inLootBox;
         uint256 id;
-        StateConfig priceConfig;
-        StateConfig canMintConfig;
+        State priceConfig;
+        State canMintConfig;
         address[] currencies;
         uint256 class;
         Rarity rarity;
@@ -56,8 +64,6 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     address public Admin;
 
     mapping(uint256 => ItemDetails) public items;
-    mapping(uint256 => address) pricePointer;
-    mapping(uint256 => address) canMintPointer;
 
     string BaseURI = "";
 
@@ -65,7 +71,6 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     event Initialize(AccessoriesConfig config);
     event BaseURIChanged(string _baseURI);
     event ClassCreated(uint256 _classId, string[] _attributes);
-    event ClassRemoved(uint256 _classId);
     event ItemCreated(uint256 _itemId, ItemDetails _item);
     event ItemUpdated(uint256 _itemId, ItemDetails _item);
     event CreatorAdded(address _addedCreator);
@@ -75,21 +80,21 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
 
     modifier canMint(uint256 _itemId) {
         ItemDetails memory item = items[_itemId];
-        // for(uint256 i=0;i<item.canMintConfig.sources.length;i=i+1){
-            State memory _state = _restore(canMintPointer[_itemId]);
-            eval("", _state, 0);
-            console.log("Script : ", (_state.stack[_state.stackIndex - 1]));
-            // require(_state.stack[_state.stackIndex - 1] > 1, "Accessories::canMint: Address does not satisfy the mint Conditions.");
-        // }
+
+        State memory _state = item.canMintConfig;
+        eval("", _state, 0);
+
+        require(_state.stack[_state.stackIndex - 1] == 1, "Accessories::canMint: Address does not satisfy the mint Conditions.");
         _;
     }
 
     constructor() ERC1155("URI") {
-        console.log("Deploying a ERC1155 Contract");
+        localOpsStart = ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
     }
 
     function initialize(AccessoriesConfig memory _config) external initializer {
         BaseURI = _config._baseURI;
+        _transferOwnership(_config._accessoriesCreator);
         emit Initialize(_config);
     }
 
@@ -108,11 +113,6 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         emit ClassCreated(Classes.length(), _attributes);
     }
 
-    function removeClass(uint256 _class) external {
-        Classes.remove(_class);
-        emit ClassRemoved(_class);
-    }
-
     function newItem(
         bool _inLootBox,
         StateConfig memory _priceConfig,
@@ -127,16 +127,13 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         items[totalItems] = ItemDetails(
             _inLootBox,
             totalItems,
-            _priceConfig,
-            _canMintConfig,
+            _restore(_snapshot(_newState(_priceConfig))),
+            _restore(_snapshot(_newState(_canMintConfig))),
             _paymentTokens,
             getClass(_class),
             getRarity(_rarity),
             _msgSender()
         );
-
-        pricePointer[totalItems] = _snapshot(_newState(_priceConfig));
-        canMintPointer[totalItems] = _snapshot(_newState(_canMintConfig));
 
         emit ItemCreated(totalItems, items[totalItems]);
     }
@@ -144,23 +141,12 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     function updateItem(
         uint256 _itemId,
         bool _inLootBox,
-        StateConfig memory _priceConfig,
-        StateConfig memory _canMintConfig,
-        address[] memory _paymentTokens,
-        uint8 _class,
-        uint8 _rarity
+        StateConfig memory _canMintConfig
     ) external {
         require(_msgSender() == items[_itemId].creator, "Accessories::updateItem: Only Creator can update the ItemDetails.");
 
         items[_itemId].inLootBox = _inLootBox;
-        items[_itemId].priceConfig = _priceConfig;
-        items[_itemId].canMintConfig = _canMintConfig;
-        items[_itemId].currencies = _paymentTokens;
-        items[_itemId].class = getClass(_class);
-        items[_itemId].rarity = getRarity(_rarity);
-
-        pricePointer[_itemId] = _snapshot(_newState(_priceConfig));
-        canMintPointer[_itemId] = _snapshot(_newState(_canMintConfig));
+        items[_itemId].canMintConfig = _restore(_snapshot(_newState(_canMintConfig)));
         
         emit ItemUpdated(totalItems, items[totalItems]);
     }
@@ -178,7 +164,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         }
         require(flag, "Accessories::getItemPrice: Unsupported payment token.");
         
-        State memory _state = _restore(pricePointer[_itemId]);
+        State memory _state = item.priceConfig;
         eval(abi.encode(_units), _state, stackIndex);
 
         return _state.stack[_state.stackIndex - 1];
@@ -233,8 +219,36 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         IERC20(_tokenAddress).transfer(owner(), IERC20(_tokenAddress).balanceOf(address(this)));
     }
 
-    function getReport(address _tier, address _account) public view returns(uint256) {
-        console.log("Solidity : ", ITier(_tier).report(_account));
-        return ITier(_tier).report(_account);
+    function getReport(uint256 report_, uint256 blockNumber_) public view returns(uint256) {
+        console.log(TierReport.tierAtBlockFromReport(report_, blockNumber_));
+        return TierReport.tierAtBlockFromReport(report_, blockNumber_);
+    }
+    
+    function applyOp(
+        bytes memory context_,
+        State memory state_,
+        uint256 opcode_,
+        uint256 operand_
+    ) internal view virtual override{
+        unchecked {
+            if (opcode_ < localOpsStart) {
+                AllStandardOps.applyOp(
+                    state_,
+                    opcode_ - ALL_STANDARD_OPS_START,
+                    operand_
+                );
+            } else {
+                opcode_ -= localOpsStart;
+                require(opcode_ < LOCAL_OPS_LENGTH, "MAX_OPCODE");
+                // There's only one opcode, which stacks the address to report.
+                uint256 _report = state_.stack[state_.stackIndex - 2];
+                uint256 _block = state_.stack[state_.stackIndex - 1];
+                state_.stackIndex -= 2;
+                uint256 report = TierReport.tierAtBlockFromReport(_report, _block);
+                
+                state_.stack[state_.stackIndex] = report;
+                state_.stackIndex++;
+            }
+        }
     }
 }

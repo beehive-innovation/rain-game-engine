@@ -26,7 +26,6 @@ contract AccessoriesFactory is Factory {
         AccessoriesConfig memory _config = abi.decode(data_, (AccessoriesConfig));
         address clone_ = Clones.clone(implementation);
         Accessories(clone_).initialize(_config);
-        Accessories(clone_).transferOwnership(msg.sender);
         return clone_;
     }
 

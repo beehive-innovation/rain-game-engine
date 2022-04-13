@@ -1,0 +1,9 @@
+type AccessoriesFactory @entity {
+  id: ID!
+  implementation: Bytes!
+  children: [Accessory!]
+}
+
+type Accessory @entity {
+  id: ID!
+}

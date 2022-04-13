@@ -1,15 +1,17 @@
 const { expect } = require("chai");
-const { artifacts ,ethers } = require("hardhat");
+const { artifacts ,ethers, } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
-import type { Accessories } from "../typechain/Accessories"
+import type { Accessories, AccessoriesConfigStruct } from "../typechain/Accessories"
 import type { Token } from "../typechain/Token"
 import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
 
-import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs } from "./utils"
+import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, accessoriesDeploy, fetchFile, writeFile, exec } from "./utils"
 import { Contract } from "ethers";
+import path from "path";
+import { AccessoriesFactory__factory } from "../typechain/factories/AccessoriesFactory__factory";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
@@ -28,7 +30,10 @@ export let owner: SignerWithAddress,
   creator: SignerWithAddress,
   creator2: SignerWithAddress,
   buyer1: SignerWithAddress,
-  buyer2: SignerWithAddress
+  buyer2: SignerWithAddress,
+  accessoriesOwner: SignerWithAddress
+
+const subgraphName = "vishalkale151071/blocks";
 
 before("Deploy Accessories Contract and subgraph", async function () {
   const signers = await ethers.getSigners();
@@ -38,10 +43,21 @@ before("Deploy Accessories Contract and subgraph", async function () {
   creator2 = signers[2];
   buyer1 = signers[3];
   buyer2 = signers[4];
-  
-  const Accessories = await ethers.getContractFactory("Accessories");
-  accessories = await Accessories.deploy();
-  await accessories.deployed();
+  accessoriesOwner = signers[5];
+
+  const accessoriesFactory = await new AccessoriesFactory__factory(owner).deploy()
+  await accessoriesFactory.deployed();
+
+  const accessoriesConfig: AccessoriesConfigStruct = {
+    _accessoriesCreator: accessoriesOwner.address,
+    _baseURI: "www.baseURI.com/metadata"
+  }
+
+  accessories = await accessoriesDeploy(accessoriesFactory, accessoriesOwner, accessoriesConfig, {gasLimit : 10 ** 18});
+  console.log("here");  
+
+  await accessories.deployed()
+
 
   const Erc20 = await ethers.getContractFactory("Token");
   
@@ -78,12 +94,26 @@ before("Deploy Accessories Contract and subgraph", async function () {
   ) as ERC20BalanceTier & Contract;
 
   await erc20BalanceTier.deployed();
+
+  const pathExampleConfig = path.resolve(__dirname, "../config/localhost.json");
+  const config = JSON.parse(fetchFile(pathExampleConfig));
+
+  config.network = "localhost";
+
+  config.accessoriesFactory = accessoriesFactory.address;
+  config.accessoriesFactoryBlock = accessoriesFactory.deployTransaction.blockNumber;
+
+  console.log("Config : ", JSON.stringify(config));
+  const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
+  writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
+
+  exec(`npm run deploy:localhost`);
 })
 
 describe("Accessories Test", function () {
   it("Contract should be deployed.", async function () {
     expect(accessories.address).to.be.not.null;
-    expect(await accessories.owner()).to.equals(owner.address);
+    expect(await accessories.owner()).to.equals(accessoriesOwner.address);
   });
 
   it("Should deploy all tokens", async function () {
@@ -95,8 +125,8 @@ describe("Accessories Test", function () {
   });
 
   it("Should add creator",async function () {
-    await accessories.connect(owner).addCreator(creator.address);
-    await accessories.connect(owner).addCreator(creator2.address);
+    await accessories.connect(accessoriesOwner).addCreator(creator.address);
+    await accessories.connect(accessoriesOwner).addCreator(creator2.address);
 
     let expected_creator = await accessories.getCreators()
     expect(expected_creator).to.deep.include(creator.address);
@@ -128,22 +158,33 @@ describe("Accessories Test", function () {
     const currencies = [USDT.address, BNB.address, SOL.address, XRP.address]
     await accessories.createClass(["A", "B"]);
 
-    const canMintConstants = [ erc20BalanceTier.address ]
+    const tierCondition = 4
+    const blockCondition = 15
 
-    const TierAddressOP = op(Opcode.VAL, 0)
-    const SenderOP = op(Opcode.SENDER)
-    const ReportOP = op(Opcode.REPORT)
+    const canMintConstants = [ erc20BalanceTier.address, tierCondition, blockCondition]
+
+    const tierSources = concat([
+      op(Opcode.VAL, 0),
+      op(Opcode.SENDER),
+      op(Opcode.REPORT),
+      op(Opcode.BLOCK_NUMBER),
+      op(Opcode.REPORT_AT_BLOCK),
+      op(Opcode.VAL, 1),
+      op(Opcode.GREATER_THAN),
+      op(Opcode.BLOCK_NUMBER),
+
+      op(Opcode.VAL, 2),
+      op(Opcode.GREATER_THAN),
+      op(Opcode.EVERY, 2)
+    ])
+
 
     const canMintConfig: VMState = {
       sources: [
-        concat([
-          SenderOP,
-          TierAddressOP,
-          ReportOP
-        ])
+        tierSources
       ],
       constants: canMintConstants,
-      stackLength: 3,
+      stackLength: 10,
       argumentsLength: 0,
     }
 
@@ -183,16 +224,9 @@ describe("Accessories Test", function () {
   });
 
   it("Should buy Item '1'", async function() {
-    // console.log("Before Balance : ", await rTKN.balanceOf(buyer1.address))
-    // console.log("Before Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
-    await rTKN.connect(buyer1).mintTokens(1)
-    // console.log("After Balance : ", await rTKN.balanceOf(buyer1.address))
-    // console.log("After Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
-    // await rTKN.connect(buyer1).mintTokens(1)
-    // console.log("After Balance : ", await rTKN.balanceOf(buyer1.address))
-    // console.log("After Tier Level : ", (await erc20BalanceTier.report(buyer1.address)).toHexString())
-    // console.log("Script Tier Level : ", (await erc20BalanceTier.report(buyer1.address)))
-    console.log("Solidity Tier Level : ", (await accessories.getReport(erc20BalanceTier.address, buyer1.address)))
+    await rTKN.connect(buyer1).mintTokens(5)
+
+    // console.log("Test Tier Level : ", (await accessories.getReport(await erc20BalanceTier.report(buyer1.address), 22)))
 
     await USDT.connect(buyer1).mintTokens(1);
     await BNB.connect(buyer1).mintTokens(25);

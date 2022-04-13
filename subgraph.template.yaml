@@ -1,0 +1,27 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AccessoriesFactory
+    network: {{ network }}
+    source:
+      address: "{{ accessoriesFactory }}"
+      abi: AccessoriesFactory
+      startBlock: {{ accessoriesFactoryBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Implementation
+        - NewChild
+      abis:
+        - name: AccessoriesFactory
+          file: ./abis/AccessoriesFactory.json
+      eventHandlers:
+        - event: Implementation(address,address)
+          handler: handleImplementation
+        - event: NewChild(address,address)
+          handler: handleNewChild
+      file: ./src/AccessoriesFactory.ts

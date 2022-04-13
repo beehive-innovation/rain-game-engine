@@ -1,18 +1,29 @@
-import type { HardhatUserConfig } from "hardhat/types";
+import * as dotenv from "dotenv";
+
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "@nomiclabs/hardhat-ethers";
-import "hardhat-contract-sizer";
+
+dotenv.config();
+
+function createLocalHostConfig() {
+  const url = "http://localhost:8545";
+  const mnemonic =
+    "test test test test test test test test test test test junk";
+  return {
+    accounts: {
+      count: 10,
+      initialIndex: 0,
+      mnemonic,
+      path: "m/44'/60'/0'/0",
+    },
+    url,
+  };
+}
 
 const config: HardhatUserConfig = {
   typechain: {
-    outDir: "typechain", // overrides upstream 'fix' for another issue which changed this to 'typechain-types'
-  },
-  networks: {
-    hardhat: {
-      blockGasLimit: 100000000,
-      allowUnlimitedContractSize: true,
-    },
+    outDir: "typechain",
   },
   solidity: {
     compilers: [
@@ -49,5 +60,13 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  defaultNetwork: "localhost",
+  networks: {
+    localhost: createLocalHostConfig(),
+  },
+  mocha: {
+    timeout: 600000,
+  },
 };
+
 export default config;

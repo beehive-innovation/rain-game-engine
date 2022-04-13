@@ -1,8 +1,17 @@
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
-import { StateConfigStruct } from "../typechain/Accessories"
-import { ContractTransaction, Contract, BigNumber } from "ethers";
+import { Accessories, AccessoriesConfigStruct, StateConfigStruct } from "../typechain/Accessories"
+import { Factory, NewChildEvent } from "../typechain/Factory"
+import { ContractTransaction, Contract, BigNumber, Overrides } from "ethers";
 import { Result } from "ethers/lib/utils";
+import { ethers } from "hardhat";
+import { AccessoriesFactory } from "../typechain/AccessoriesFactory";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Accessories__factory } from "../typechain/factories/Accessories__factory";
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+
 const logger = new Logger(version);
 
 export type VMState = StateConfigStruct;
@@ -68,8 +77,12 @@ export enum AllStandardOps {
   length,
 }
 
+enum AccessoriesOpcode {
+  REPORT_AT_BLOCK = 0 + AllStandardOps.length
+}
 export const Opcode = {
-  ...AllStandardOps
+  ...AllStandardOps,
+  ...AccessoriesOpcode,
 };
 
 
@@ -297,3 +310,73 @@ export const getEventArgs = async (
 export function BNtoInt(x: BigNumber): number {
   return parseInt(x._hex);
 }
+
+export const getChild = async (
+  factory: Factory,
+  transaction: ContractTransaction
+): Promise<string> => {
+  const { child } = (await getEventArgs(
+    transaction,
+    "NewChild",
+    factory
+  )) as NewChildEvent["args"];
+
+  if (!ethers.utils.isAddress(child)) {
+    throw new Error(`invalid address: ${child} (${child.length} chars)`);
+  }
+
+  return child;
+};
+
+export const accessoriesDeploy = async (
+  accessoriesFactory: AccessoriesFactory,
+  creator: SignerWithAddress,
+  accessoriesConfig: AccessoriesConfigStruct,
+  override: Overrides = {}
+): Promise<Accessories> => {
+  // Creating child
+  const txDeploy = await accessoriesFactory
+    .connect(creator)
+    .createChildTyped(
+      accessoriesConfig,
+      override
+    );
+
+  const accessories = new Accessories__factory(creator).attach(
+    await getChild(accessoriesFactory, txDeploy)
+  );
+
+  await accessories.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  accessories.deployTransaction = txDeploy;
+
+  return accessories;
+};
+
+export const fetchFile = (_path: string): string => {
+  try {
+    return fs.readFileSync(_path).toString();
+  } catch (error) {
+    console.log(error);
+    return "";
+  }
+};
+
+export const writeFile = (_path: string, file: any): void => {
+  try {
+    fs.writeFileSync(_path, file);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const exec = (cmd: string): string | Buffer => {
+  const srcDir = path.join(__dirname, "..");
+  try {
+    return execSync(cmd, { cwd: srcDir, stdio: "inherit" });
+  } catch (e) {
+    throw new Error(`Failed to run command \`${cmd}\``);
+  }
+};
