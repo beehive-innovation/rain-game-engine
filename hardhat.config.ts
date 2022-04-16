@@ -18,6 +18,8 @@ function createLocalHostConfig() {
       path: "m/44'/60'/0'/0",
     },
     url,
+    blockGasLimit: 30000000,
+    allowUnlimitedContractSize: true,
   };
 }
 
@@ -63,6 +65,10 @@ const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
   networks: {
     localhost: createLocalHostConfig(),
+    hardhat: {
+      blockGasLimit: 30000000,
+      allowUnlimitedContractSize: true,
+    }
   },
   mocha: {
     timeout: 600000,

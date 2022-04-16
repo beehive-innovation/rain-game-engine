@@ -6,4 +6,53 @@ type AccessoriesFactory @entity {
 
 type Accessory @entity {
   id: ID!
+  totalItems: BigInt!
+  owner: Bytes!
+  admin: Bytes!
+  baseURI: String!
+  creators: [Creator!]
+  classes: [ItemClass!]
+  items: [Item!]
+  deployBock: BigInt!
+  deployTimestam: BigInt!
+}
+
+type Item @entity {
+  id: ID!
+  itemId: BigInt!
+  creator: Bytes!
+  lootBoxID: BigInt!
+  priceConfig: PriceConfig!
+  canMintConfig: CanMintConfig!
+  currencies: [Bytes!]!
+  itemClass: ItemClass!
+  rarity: Int!
+  creationBock: BigInt!
+  creationTimestam: BigInt!
+}
+
+type ItemClass @entity{
+  id: ID!
+  attributes: [String!]!
+}
+
+type PriceConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
+}
+
+type CanMintConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
+}
+
+type Creator @entity{
+  id: ID!
+  address: Bytes!
 }

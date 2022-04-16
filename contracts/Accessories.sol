@@ -3,12 +3,14 @@ pragma solidity ^0.8.10;
 
 import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
+import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
+import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import '@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol';
 import '@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol';
 import '@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol';
@@ -20,7 +22,7 @@ struct AccessoriesConfig {
     string _baseURI;
 }
 
-contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
+contract Accessories is ERC1155Upgradeable, ERC1155Holder, OwnableUpgradeable, RainVM, VMState{
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -30,7 +32,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
 
     uint256 internal constant LOCAL_OPS_LENGTH = 1;
 
-    uint256 private immutable localOpsStart;
+    uint256 private immutable localOpsStart = ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
 
     enum Rarity {
         NONE,
@@ -38,6 +40,11 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         UNCOMMON,
         RARE,
         ULTRARARE
+    }
+
+    enum Type {
+        ERC20,
+        ERC1155
     }
 
     uint256 public totalItems;
@@ -51,12 +58,12 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     EnumerableSet.AddressSet Creators;
 
     struct ItemDetails {
-        bool inLootBox;
+        uint256 lootBoxId;
         uint256 id;
         State priceConfig;
         State canMintConfig;
         address[] currencies;
-        uint256 class;
+        uint256 itemClass;
         Rarity rarity;
         address creator;
     }
@@ -71,8 +78,8 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     event Initialize(AccessoriesConfig config);
     event BaseURIChanged(string _baseURI);
     event ClassCreated(uint256 _classId, string[] _attributes);
-    event ItemCreated(uint256 _itemId, ItemDetails _item);
-    event ItemUpdated(uint256 _itemId, ItemDetails _item);
+    event ItemCreated(uint256 _itemId, ItemDetails _item, StateConfig _priceConfig, StateConfig _canMintConfig);
+    event ItemUpdated(uint256 _itemId, ItemDetails _item, StateConfig _canMintConfig);
     event CreatorAdded(address _addedCreator);
     event CreatorRemoved(address _removedCreator);
     event AdminChanged(address _admin);
@@ -88,13 +95,12 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         _;
     }
 
-    constructor() ERC1155("URI") {
-        localOpsStart = ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
-    }
 
     function initialize(AccessoriesConfig memory _config) external initializer {
         BaseURI = _config._baseURI;
-        _transferOwnership(_config._accessoriesCreator);
+        __ERC1155_init(_config._baseURI);
+        __Ownable_init();
+        transferOwnership(_config._accessoriesCreator);
         emit Initialize(_config);
     }
 
@@ -114,7 +120,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     }
 
     function newItem(
-        bool _inLootBox,
+        uint256 _lootBoxId,
         StateConfig memory _priceConfig,
         StateConfig memory _canMintConfig,
         address[] memory _paymentTokens,
@@ -125,7 +131,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         totalItems = totalItems.add(1);
         
         items[totalItems] = ItemDetails(
-            _inLootBox,
+            _lootBoxId,
             totalItems,
             _restore(_snapshot(_newState(_priceConfig))),
             _restore(_snapshot(_newState(_canMintConfig))),
@@ -135,23 +141,23 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
             _msgSender()
         );
 
-        emit ItemCreated(totalItems, items[totalItems]);
+        emit ItemCreated(totalItems, items[totalItems], _priceConfig, _canMintConfig);
     }
 
     function updateItem(
         uint256 _itemId,
-        bool _inLootBox,
+        uint256 _lootBoxId,
         StateConfig memory _canMintConfig
     ) external {
         require(_msgSender() == items[_itemId].creator, "Accessories::updateItem: Only Creator can update the ItemDetails.");
 
-        items[_itemId].inLootBox = _inLootBox;
+        items[_itemId].lootBoxId = _lootBoxId;
         items[_itemId].canMintConfig = _restore(_snapshot(_newState(_canMintConfig)));
         
-        emit ItemUpdated(totalItems, items[totalItems]);
+        emit ItemUpdated(totalItems, items[totalItems], _canMintConfig);
     }
 
-    function getItemPrice(uint256 _itemId, address _paymentToken, uint256 _units) public view returns(uint256){
+    function getItemPrice(uint256 _itemId, address _paymentToken, uint256 _units) public view returns(uint256[] memory){
         uint256 stackIndex;
         bool flag = false;
         ItemDetails memory item = items[_itemId];
@@ -165,17 +171,24 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         require(flag, "Accessories::getItemPrice: Unsupported payment token.");
         
         State memory _state = item.priceConfig;
-        eval(abi.encode(_units), _state, stackIndex);
+        eval(abi.encode(1), _state, stackIndex);
+        _state.stack[_state.stackIndex - 1] = _state.stack[_state.stackIndex - 1].mul(_units);
 
-        return _state.stack[_state.stackIndex - 1];
+        return _state.stack;
     }
 
     function buyItem(uint256 _itemId, uint256 _units) external canMint(_itemId){
         require(_itemId <= totalItems, "Accessories::buyItem: Invalid ItemId.");
         ItemDetails memory item = items[_itemId];
         for(uint256 i=0;i<item.currencies.length;i=i+1){
-            IERC20 token = IERC20(item.currencies[i]);
-            token.transferFrom(_msgSender(), address(this), getItemPrice(_itemId, address(token), _units));
+            uint256[] memory stack = getItemPrice(_itemId, item.currencies[i], _units);
+            // console.log(stack[0], stack[1], stack[2]);
+            if(stack[0] == uint256(Type.ERC20)){
+                IERC20(item.currencies[i]).transferFrom(msg.sender, address(this), stack[2]);
+            }
+            else if(stack[0] == uint256(Type.ERC1155)){
+                IERC1155(item.currencies[i]).safeTransferFrom(msg.sender, address(this), stack[1], stack[2], "");
+            }
         }
         _mint(_msgSender(), _itemId, _units, "");
     }
@@ -197,10 +210,6 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
         emit AdminChanged(_admin);
     }
 
-    function getCreators() external view returns (address[] memory){
-        return Creators.values();
-    }
-
     function getRarity(uint8 _rarity) internal pure returns(Rarity){
         if(_rarity == 0) return Rarity.NONE;
         else if(_rarity == 1) return Rarity.COMMON;
@@ -220,7 +229,7 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
     }
 
     function getReport(uint256 report_, uint256 blockNumber_) public view returns(uint256) {
-        console.log(TierReport.tierAtBlockFromReport(report_, blockNumber_));
+        // console.log(TierReport.tierAtBlockFromReport(report_, blockNumber_));
         return TierReport.tierAtBlockFromReport(report_, blockNumber_);
     }
     
@@ -250,5 +259,18 @@ contract Accessories is ERC1155, Ownable, RainVM, VMState, Initializable{
                 state_.stackIndex++;
             }
         }
+    }
+
+    function getCreators() external view returns (address[] memory){
+        return Creators.values();
+    }
+
+    function getClasses() external view returns (uint256[] memory){
+        return Classes.values();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override( ERC1155Receiver, ERC1155Upgradeable) returns (bool) {
+        return 
+            interfaceId == type(ERC1155Receiver).interfaceId || ERC1155Upgradeable.supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
 }

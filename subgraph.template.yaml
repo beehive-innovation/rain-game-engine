@@ -25,3 +25,47 @@ dataSources:
         - event: NewChild(address,address)
           handler: handleNewChild
       file: ./src/AccessoriesFactory.ts
+templates:
+  - kind: ethereum
+    name: AccessoriesTemplate
+    network: {{ network }}
+    source:
+      abi: Accessories
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Implementation
+        - NewChild
+      abis:
+        - name: Accessories
+          file: ./abis/Accessories.json
+      eventHandlers:
+        - event: AdminChanged(address)
+          handler: handleAdminChanged
+        - event: BaseURIChanged(string)
+          handler: BaseURIChanged
+        - event: ClassCreated(uint256,string[])
+          handler: handleClassCreated
+        - event: CreatorAdded(address)
+          handler: handleCreatorAdded
+        - event: CreatorRemoved(address)
+          handler: handleCreatorRemoved
+        - event: Initialize((address,string))
+          handler: handleInitialize
+        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+          handler: handleItemCreated
+        - event: ItemUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
+          handler: handleItemUpdated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleTransferBatch
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle
+        - event: URI(string,indexed uint256)
+          handler: handleURI
+      file: ./src/Accessories.ts  

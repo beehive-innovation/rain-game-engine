@@ -19,6 +19,11 @@ export type VMState = StateConfigStruct;
 export const eighteenZeros = "000000000000000000"
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
+export enum Type {
+  ERC20,
+  ERC1155
+}
+
 export enum Rarity {
     NONE,
     COMMON,
