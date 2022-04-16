@@ -24,7 +24,7 @@ type Item @entity {
   lootBoxID: BigInt!
   priceConfig: PriceConfig!
   canMintConfig: CanMintConfig!
-  currencies: [Bytes!]!
+  currencies: [String!]!
   itemClass: ItemClass!
   rarity: Int!
   creationBock: BigInt!
@@ -55,4 +55,17 @@ type CanMintConfig @entity {
 type Creator @entity{
   id: ID!
   address: Bytes!
+}
+
+type Holder @entity {
+  id: ID!
+  address: Bytes!
+  itemsOwned: [ItemOwned!]
+}
+
+type ItemOwned @entity {
+  id: ID!
+  item: Item!
+  itemId: BigInt!
+  count: BigInt!
 }

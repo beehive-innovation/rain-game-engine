@@ -6,7 +6,6 @@ import { it } from "mocha";
 import type { Accessories, AccessoriesConfigStruct } from "../typechain/Accessories"
 import type { Token } from "../typechain/Token"
 import type { ReserveToken } from "../typechain/ReserveToken"
-import type { ReserveTokenERC721 } from "../typechain/ReserveTokenERC721"
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155"
 import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
@@ -130,7 +129,7 @@ before("Deploy Accessories Contract and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  // exec(`npm run deploy:localhost`);
+  exec(`npm run deploy:localhost`);
 })
 
 describe("Accessories Test", function () {
@@ -161,8 +160,8 @@ describe("Accessories Test", function () {
     const expectedUSDTPrice = ethers.BigNumber.from("1" + eighteenZeros);
     const expectedBNBPrice = ethers.BigNumber.from("25" + eighteenZeros);
 
-    const USDTConfig = [ Type.ERC20, 0, expectedUSDTPrice]
-    const BNBConfig = [ Type.ERC20, 0, expectedBNBPrice]
+    const USDTConfig = [ Type.ERC20, expectedUSDTPrice]
+    const BNBConfig = [ Type.ERC20, expectedBNBPrice]
     // const BAYCConfig = [ Type.ERC721, 10, 0]
     // const PUNKSConfig = [ Type.ERC721, 100, 0]
     const CARSConfig = [ Type.ERC1155, 5, 10]
@@ -170,8 +169,8 @@ describe("Accessories Test", function () {
 
     const constants = [...USDTConfig, ...BNBConfig, ...CARSConfig, ...PLANESCofig];
     let pos = -1;
-    const USDTSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    const BNBource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
+    const USDTSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
+    const BNBource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     // const BAYCSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     // const PUNKSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     const CARSSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
@@ -239,28 +238,10 @@ describe("Accessories Test", function () {
       rarity: Rarity.NONE,
       creator: creator.address,
     })
-    
-    // let priceUSDT  = await accessories.getItemPrice(1, USDT.address ,1);
-    // expect(priceUSDT).to.deep.equals(expectedUSDTPrice);
-    // // console.log({priceUSDT})
-
-    // let priceBNB  = await accessories.getItemPrice(1, BNB.address ,1);
-    // expect(priceBNB).to.deep.equals(expectedBNBPrice);
-    // // console.log({priceBNB})
-
-    // let priceSOL  = await accessories.getItemPrice(1, SOL.address ,1);
-    // expect(priceSOL).to.deep.equals(expectedSOLPrice);
-    // // console.log({priceSOL})
-
-    // let priceXRP  = await accessories.getItemPrice(1, XRP.address ,1);
-    // expect(priceXRP).to.deep.equals(expectedXRPPrice);
-    // console.log({priceXRP})
   });
 
   it("Should buy Item '1'", async function() {
     await rTKN.connect(buyer1).mintTokens(5)
-
-    // console.log("Test Tier Level : ", (await accessories.getReport(await erc20BalanceTier.report(buyer1.address), 22)))
 
     await USDT.connect(buyer1).mintTokens(1);
     await BNB.connect(buyer1).mintTokens(25);
@@ -268,8 +249,8 @@ describe("Accessories Test", function () {
     await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
 
-    let USDTPrice = (await accessories.getItemPrice(1, USDT.address, 1))[2]
-    let BNBPrice = (await accessories.getItemPrice(1, BNB.address, 1))[2]
+    let USDTPrice = (await accessories.getItemPrice(1, USDT.address, 1))[1]
+    let BNBPrice = (await accessories.getItemPrice(1, BNB.address, 1))[1]
 
     await USDT.connect(buyer1).approve(accessories.address, USDTPrice);
     await BNB.connect(buyer1).approve(accessories.address, BNBPrice);

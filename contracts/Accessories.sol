@@ -78,7 +78,7 @@ contract Accessories is ERC1155Upgradeable, ERC1155Holder, OwnableUpgradeable, R
     event Initialize(AccessoriesConfig config);
     event BaseURIChanged(string _baseURI);
     event ClassCreated(uint256 _classId, string[] _attributes);
-    event ItemCreated(uint256 _itemId, ItemDetails _item, StateConfig _priceConfig, StateConfig _canMintConfig);
+    event ItemCreated(uint256 _itemId, ItemDetails _item, address[] _currencies, StateConfig _priceConfig, StateConfig _canMintConfig);
     event ItemUpdated(uint256 _itemId, ItemDetails _item, StateConfig _canMintConfig);
     event CreatorAdded(address _addedCreator);
     event CreatorRemoved(address _removedCreator);
@@ -141,7 +141,7 @@ contract Accessories is ERC1155Upgradeable, ERC1155Holder, OwnableUpgradeable, R
             _msgSender()
         );
 
-        emit ItemCreated(totalItems, items[totalItems], _priceConfig, _canMintConfig);
+        emit ItemCreated(totalItems, items[totalItems], _paymentTokens,  _priceConfig, _canMintConfig);
     }
 
     function updateItem(
@@ -184,7 +184,7 @@ contract Accessories is ERC1155Upgradeable, ERC1155Holder, OwnableUpgradeable, R
             uint256[] memory stack = getItemPrice(_itemId, item.currencies[i], _units);
             // console.log(stack[0], stack[1], stack[2]);
             if(stack[0] == uint256(Type.ERC20)){
-                IERC20(item.currencies[i]).transferFrom(msg.sender, address(this), stack[2]);
+                IERC20(item.currencies[i]).transferFrom(msg.sender, address(this), stack[1]);
             }
             else if(stack[0] == uint256(Type.ERC1155)){
                 IERC1155(item.currencies[i]).safeTransferFrom(msg.sender, address(this), stack[1], stack[2], "");

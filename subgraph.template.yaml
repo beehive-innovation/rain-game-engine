@@ -54,7 +54,7 @@ templates:
           handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),address[],(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
           handler: handleItemCreated
         - event: ItemUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
           handler: handleItemUpdated

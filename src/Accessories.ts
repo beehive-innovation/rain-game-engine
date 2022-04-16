@@ -20,9 +20,12 @@ import {
     ItemClass,
     PriceConfig, 
     CanMintConfig,
-    Creator
+    Creator,
+    Holder,
+    ItemOwned
 } from "../generated/schema"
-import { store, BigInt, log, Bytes } from "@graphprotocol/graph-ts";
+import { store, BigInt, log, Bytes, Address } from "@graphprotocol/graph-ts";
+import { ONE_BI, ZERO_BI } from "./utils";
 
 export function handleAdminChanged(event: AdminChanged): void {
     let accessory = Accessory.load(event.address.toHex())
@@ -100,9 +103,10 @@ export function handleItemCreated(event: ItemCreated): void {
     item.creationBock = event.block.number;
     item.creationTimestam = event.block.timestamp;
 
-    let currencies: Bytes[];
-    for(let i=0; i<event.params._item.currencies.length;i++){
-        if(currencies) currencies.push(event.params._item.currencies[i]);
+    let _currencies = event.params._item.currencies;
+    let currencies = item.currencies;
+    for(let i=0; i<_currencies.length;i++){
+        currencies.push(_currencies[i].toHex());
     }
 
     item.currencies = currencies;
@@ -132,6 +136,9 @@ export function handleItemCreated(event: ItemCreated): void {
         let items = accessory.items;
         if(items) items.push(item.id);
         accessory.items = items;
+
+        accessory.totalItems = accessory.totalItems.plus(ONE_BI);
+
         accessory.save();
     }
 
@@ -168,7 +175,33 @@ export function handleTransferBatch(event: TransferBatch): void {
 
 }
 export function handleTransferSingle(event: TransferSingle): void {
+    let receiver = Holder.load(event.address.toHex() + "-" + event.params.to.toHex());
+    if(!receiver){
+        receiver = new Holder(event.address.toHex() + "-" + event.params.to.toHex());
+        receiver.address = event.params.to;
+        receiver.itemsOwned = []
+    }
+        
+    let itemsOwned = ItemOwned.load(event.address.toHex() + "-" + event.params.to.toHex() + "-" + event.params.id.toString());
+    if(!itemsOwned){
+        itemsOwned = new ItemOwned(event.address.toHex() + "-" + event.params.to.toHex() + "-" + event.params.id.toString());
+        itemsOwned.count = ZERO_BI;
+        let item = Item.load(event.address.toHex() + "-" + event.params.id.toString());
+        if(item){
+            itemsOwned.item = item.id;
+            itemsOwned.itemId = item.itemId;
+        }
+    }
+    itemsOwned.count = itemsOwned.count.plus(event.params.value);
+    itemsOwned.save();
 
+    let holdersitemsOwned = receiver.itemsOwned;
+    if(holdersitemsOwned && !holdersitemsOwned.includes(itemsOwned.id)){
+        holdersitemsOwned.push(itemsOwned.id);
+    }
+    receiver.itemsOwned = holdersitemsOwned;
+    
+    receiver.save();
 }
 export function handleURI(event: URI): void {
 

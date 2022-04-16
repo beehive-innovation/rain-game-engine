@@ -6,9 +6,9 @@ dataSources:
     name: AccessoriesFactory
     network: localhost
     source:
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+      address: "0x7C8BaafA542c57fF9B2B90612bf8aB9E86e22C09"
       abi: AccessoriesFactory
-      startBlock: 3
+      startBlock: 638
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -54,7 +54,7 @@ templates:
           handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),address[],(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
           handler: handleItemCreated
         - event: ItemUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
           handler: handleItemUpdated
