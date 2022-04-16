@@ -224,13 +224,25 @@ contract Accessories is ERC1155Upgradeable, ERC1155Holder, OwnableUpgradeable, R
         else revert ("Accessories::getClass: Invalid class value.");
     }
 
-    function withdraw(address _tokenAddress) public onlyOwner{
-        IERC20(_tokenAddress).transfer(owner(), IERC20(_tokenAddress).balanceOf(address(this)));
+    function withdraw(address[] memory _tokenAddresses) public onlyOwner{
+        for(uint256 i=0;i<_tokenAddresses.length;i++){
+            IERC20(
+                _tokenAddresses[i]).transfer(owner(),
+                IERC20(_tokenAddresses[i]).balanceOf(address(this))
+            );
+        }
     }
 
-    function getReport(uint256 report_, uint256 blockNumber_) public view returns(uint256) {
-        // console.log(TierReport.tierAtBlockFromReport(report_, blockNumber_));
-        return TierReport.tierAtBlockFromReport(report_, blockNumber_);
+    function withdrawERC1155(address[] memory _tokenAddresses, uint256[] memory _ids) external onlyOwner{
+        for(uint256 i=0;i<_tokenAddresses.length;i++){
+            IERC1155(
+                _tokenAddresses[i]).safeTransferFrom(address(this),
+                owner(),
+                _ids[i],
+                IERC1155(_tokenAddresses[i]).balanceOf(address(this), _ids[i]),
+                ""
+            );
+        }
     }
     
     function applyOp(

@@ -279,16 +279,32 @@ describe("Accessories Test", function () {
     
     await accessories.connect(buyer1).buyItem(1,1);
 
-    // expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
 
-    // expect(await USDT.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    // expect(await BNB.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-    // expect(await SOL.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("50" + eighteenZeros))
-    // expect(await XRP.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("75" + eighteenZeros))
+    expect(await USDT.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
+    expect(await BNB.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
+    expect(await CARS.balanceOf(accessories.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
+    expect(await PLANES.balanceOf(accessories.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
+    
+    expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
+    expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
+    expect(await CARS.balanceOf(buyer1.address, 5)).to.deep.equals(ethers.BigNumber.from("0"))
+    expect(await PLANES.balanceOf(buyer1.address, 15)).to.deep.equals(ethers.BigNumber.from("0"))
+    
+  });
 
-    // expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-    // expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-    // expect(await SOL.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-    // expect(await XRP.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
+  it("Withdraw Test", async function () {
+    expect(await USDT.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await BNB.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await CARS.balanceOf(accessoriesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await PLANES.balanceOf(accessoriesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("0"));
+
+    await accessories.connect(accessoriesOwner).withdraw([USDT.address, BNB.address]);
+    await accessories.connect(accessoriesOwner).withdrawERC1155([CARS.address, PLANES.address], [5,15]);
+
+    expect(await USDT.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros));
+    expect(await BNB.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros));
+    expect(await CARS.balanceOf(accessoriesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"));
+    expect(await PLANES.balanceOf(accessoriesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"));
   });
 });
