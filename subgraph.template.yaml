@@ -3,12 +3,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: AccessoriesFactory
+    name: GameAssetsFactory
     network: {{ network }}
     source:
-      address: "{{ accessoriesFactory }}"
-      abi: AccessoriesFactory
-      startBlock: {{ accessoriesFactoryBlock }}
+      address: "{{ gameAssetsFactory }}"
+      abi: GameAssetsFactory
+      startBlock: {{ gameAssetsFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -17,20 +17,20 @@ dataSources:
         - Implementation
         - NewChild
       abis:
-        - name: AccessoriesFactory
-          file: ./abis/AccessoriesFactory.json
+        - name: GameAssetsFactory
+          file: ./abis/GameAssetsFactory.json
       eventHandlers:
         - event: Implementation(address,address)
           handler: handleImplementation
         - event: NewChild(address,address)
           handler: handleNewChild
-      file: ./src/AccessoriesFactory.ts
+      file: ./src/GameAssetsFactory.ts
 templates:
   - kind: ethereum
-    name: AccessoriesTemplate
+    name: GameAssetsTemplate
     network: {{ network }}
     source:
-      abi: Accessories
+      abi: GameAssets
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -39,14 +39,14 @@ templates:
         - Implementation
         - NewChild
       abis:
-        - name: Accessories
-          file: ./abis/Accessories.json
+        - name: GameAssets
+          file: ./abis/GameAssets.json
       eventHandlers:
         - event: AdminChanged(address)
           handler: handleAdminChanged
         - event: BaseURIChanged(string)
           handler: BaseURIChanged
-        - event: ClassCreated(uint256,string[])
+        - event: ClassCreated(uint256,string[],string,string)
           handler: handleClassCreated
         - event: CreatorAdded(address)
           handler: handleCreatorAdded
@@ -54,10 +54,10 @@ templates:
           handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: ItemCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),address[],(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
-          handler: handleItemCreated
-        - event: ItemUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
-          handler: handleItemUpdated
+        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+          handler: handleAssetCreated
+        - event: AssetUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
+          handler: handleAssetUpdated
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
         - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
@@ -68,4 +68,4 @@ templates:
           handler: handleTransferSingle
         - event: URI(string,indexed uint256)
           handler: handleURI
-      file: ./src/Accessories.ts  
+      file: ./src/GameAssets.ts  

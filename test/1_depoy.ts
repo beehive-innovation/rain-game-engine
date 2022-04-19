@@ -3,23 +3,23 @@ const { artifacts ,ethers, } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
-import type { Accessories, AccessoriesConfigStruct } from "../typechain/Accessories"
+import type { GameAssets, GameAssetsConfigStruct, AssetConfigStruct } from "../typechain/GameAssets"
 import type { Token } from "../typechain/Token"
 import type { ReserveToken } from "../typechain/ReserveToken"
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155"
 import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
 
-import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, accessoriesDeploy, fetchFile, writeFile, exec, Type } from "./utils"
+import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, gameAssetsDeploy, fetchFile, writeFile, exec, Type } from "./utils"
 import { Contract } from "ethers";
 import path from "path";
-import { AccessoriesFactory__factory } from "../typechain/factories/AccessoriesFactory__factory";
+import { GameAssetsFactory__factory } from "../typechain/factories/GameAssetsFactory__factory";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
 ); // [1,2,3,4,5,6,7,8]
 
-export let accessories: Accessories
+export let gameAsstes: GameAssets
 
 export let USDT: ReserveToken
 
@@ -27,9 +27,6 @@ export let BNB: Token
 export let SOL: Token
 export let XRP: Token
 export let rTKN: Token
-
-// export let BAYC: ReserveTokenERC721
-// export let PUNKS: ReserveTokenERC721
 
 export let CARS: ReserveTokenERC1155
 export let PLANES: ReserveTokenERC1155
@@ -41,11 +38,12 @@ export let owner: SignerWithAddress,
   creator2: SignerWithAddress,
   buyer1: SignerWithAddress,
   buyer2: SignerWithAddress,
-  accessoriesOwner: SignerWithAddress
+  gameAsstesOwner: SignerWithAddress,
+  admin: SignerWithAddress
 
 const subgraphName = "vishalkale151071/blocks";
 
-before("Deploy Accessories Contract and subgraph", async function () {
+before("Deploy GameAssets Contract and subgraph", async function () {
   const signers = await ethers.getSigners();
 
   owner = signers[0];
@@ -53,19 +51,20 @@ before("Deploy Accessories Contract and subgraph", async function () {
   creator2 = signers[2];
   buyer1 = signers[3];
   buyer2 = signers[4];
-  accessoriesOwner = signers[5];
+  gameAsstesOwner = signers[5];
+  admin = signers[6];
 
-  const accessoriesFactory = await new AccessoriesFactory__factory(owner).deploy()
-  await accessoriesFactory.deployed();
+  const gameAssetsFactory = await new GameAssetsFactory__factory(owner).deploy()
+  await gameAssetsFactory.deployed();
 
-  const accessoriesConfig: AccessoriesConfigStruct = {
-    _accessoriesCreator: accessoriesOwner.address,
+  const gameAssetsConfig: GameAssetsConfigStruct = {
+    _creator: gameAsstesOwner.address,
     _baseURI: "www.baseURI.com/metadata"
   }
 
-  accessories = await accessoriesDeploy(accessoriesFactory, accessoriesOwner, accessoriesConfig, {gasLimit : 1500000});
+  gameAsstes = await gameAssetsDeploy(gameAssetsFactory, gameAsstesOwner, gameAssetsConfig, {gasLimit : 1500000});
 
-  await accessories.deployed()
+  await gameAsstes.deployed()
 
 
   const Erc20 = await ethers.getContractFactory("Token");
@@ -81,11 +80,6 @@ before("Deploy Accessories Contract and subgraph", async function () {
   await SOL.deployed();
   XRP = await Erc20.deploy("Ripple", "XRP");
   await XRP.deployed();
-
-  // BAYC = await Erc721.deploy("Bored Aep Yatch Club", "BAYC");
-  // await BAYC.deployed();
-  // PUNKS = await Erc721.deploy("CryptoPunks", "C");
-  // await BAYC.deployed();
 
   CARS = await Erc1155.deploy();
   await CARS.deployed()
@@ -122,20 +116,22 @@ before("Deploy Accessories Contract and subgraph", async function () {
 
   config.network = "localhost";
 
-  config.accessoriesFactory = accessoriesFactory.address;
-  config.accessoriesFactoryBlock = accessoriesFactory.deployTransaction.blockNumber;
+  config.gameAssetsFactory = gameAssetsFactory.address;
+  config.gameAssetsFactoryBlock = gameAssetsFactory.deployTransaction.blockNumber;
 
-  console.log("Config : ", JSON.stringify(config));
+  console.log("Config : ", JSON.stringify(config, null, 2));
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
   exec(`npm run deploy:localhost`);
 })
 
-describe("Accessories Test", function () {
+describe("GameAssets Test", function () {
   it("Contract should be deployed.", async function () {
-    expect(accessories.address).to.be.not.null;
-    expect(await accessories.owner()).to.equals(accessoriesOwner.address);
+    expect(gameAsstes.address).to.be.not.null;
+    expect(await gameAsstes.owner()).to.equals(gameAsstesOwner.address);
+    expect(await gameAsstes.uri(1)).to.equals(`www.baseURI.com/metadata/${gameAsstes.address.toLowerCase()}/1.json`);
+    await gameAsstes.connect(gameAsstesOwner).setAdmin(admin.address);
   });
 
   it("Should deploy all tokens", async function () {
@@ -147,23 +143,21 @@ describe("Accessories Test", function () {
   });
 
   it("Should add creator",async function () {
-    await accessories.connect(accessoriesOwner).addCreator(creator.address);
-    await accessories.connect(accessoriesOwner).addCreator(creator2.address);
+    await gameAsstes.connect(gameAsstesOwner).addCreator(creator.address);
+    await gameAsstes.connect(gameAsstesOwner).addCreator(creator2.address);
 
-    let expected_creator = await accessories.getCreators()
+    let expected_creator = await gameAsstes.getCreators()
     expect(expected_creator).to.deep.include(creator.address);
     expect(expected_creator).to.deep.include(creator2.address);
   });
 
-  it("Should create Item from creator.", async function () {
+  it("Should create asset from creator.", async function () {
 
     const expectedUSDTPrice = ethers.BigNumber.from("1" + eighteenZeros);
     const expectedBNBPrice = ethers.BigNumber.from("25" + eighteenZeros);
 
     const USDTConfig = [ Type.ERC20, expectedUSDTPrice]
     const BNBConfig = [ Type.ERC20, expectedBNBPrice]
-    // const BAYCConfig = [ Type.ERC721, 10, 0]
-    // const PUNKSConfig = [ Type.ERC721, 100, 0]
     const CARSConfig = [ Type.ERC1155, 5, 10]
     const PLANESCofig = [ Type.ERC1155, 15, 5]
 
@@ -171,8 +165,6 @@ describe("Accessories Test", function () {
     let pos = -1;
     const USDTSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     const BNBource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    // const BAYCSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    // const PUNKSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     const CARSSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
     const PLANESSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
 
@@ -188,16 +180,20 @@ describe("Accessories Test", function () {
     };
 
     const currencies = [USDT.address, BNB.address, CARS.address, PLANES.address]
-    await accessories.createClass(["A", "B"]);
 
-    expect(await accessories.getClasses()).to.deep.include(ethers.BigNumber.from("1"))
+    const classCarName = "Car";
+    const classCarDescription = "A really good car.";
+    const classCarAttributes = ["Top speed", "Acceleration", "Break", "Handling", "Weight"]
+    await gameAsstes.createClass(classCarName, classCarDescription, classCarAttributes);
+
+    expect(await gameAsstes.getClasses()).to.deep.include(ethers.BigNumber.from("1"))
 
     const tierCondition = 4
     const blockCondition = 15
 
     const canMintConstants = [ erc20BalanceTier.address, tierCondition, blockCondition]
 
-    const tierSources = concat([
+    const canMintSource = concat([
       op(Opcode.VAL, 0),
       op(Opcode.SENDER),
       op(Opcode.REPORT),
@@ -214,33 +210,42 @@ describe("Accessories Test", function () {
 
     const canMintConfig: VMState = {
       sources: [
-        tierSources
+        canMintSource
       ],
       constants: canMintConstants,
       stackLength: 10,
       argumentsLength: 0,
     }
 
-    await accessories.connect(creator).newItem(0, priceConfig, canMintConfig, currencies , 1, Rarity.NONE);
-
-    let ItemData = await accessories.items(1)
-
-    let expectItem = {
-      lootBoxId: ItemData.lootBoxId,
-      itemClass: ItemData.itemClass,
-      rarity: ItemData.rarity,
-      creator: ItemData.creator,
+    const assetConfig: AssetConfigStruct = {
+      lootBoxId: 0,
+      priceConfig: priceConfig,
+      canMintConfig: canMintConfig,
+      currencies: currencies,
+      assetClass: 1,
+      rarity: Rarity.NONE,
     }
 
-    expect(expectItem).to.deep.equals({
+    await gameAsstes.connect(creator).createNewAsset(assetConfig);
+
+    let assetData = await gameAsstes.assets(1)
+
+    let expectAsset = {
+      lootBoxId: assetData.lootBoxId,
+      assetClass: assetData.assetClass,
+      rarity: assetData.rarity,
+      creator: assetData.creator,
+    }
+
+    expect(expectAsset).to.deep.equals({
       lootBoxId: ethers.BigNumber.from("0"),
-      itemClass: ethers.BigNumber.from("1"),
+      assetClass: ethers.BigNumber.from("1"),
       rarity: Rarity.NONE,
       creator: creator.address,
     })
   });
 
-  it("Should buy Item '1'", async function() {
+  it("Should buy asset '1'", async function() {
     await rTKN.connect(buyer1).mintTokens(5)
 
     await USDT.connect(buyer1).mintTokens(1);
@@ -249,23 +254,43 @@ describe("Accessories Test", function () {
     await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
 
-    let USDTPrice = (await accessories.getItemPrice(1, USDT.address, 1))[1]
-    let BNBPrice = (await accessories.getItemPrice(1, BNB.address, 1))[1]
+    let USDTPrice = (await gameAsstes.getAssetPrice(1, USDT.address, 1))[1]
+    let BNBPrice = (await gameAsstes.getAssetPrice(1, BNB.address, 1))[1]
 
-    await USDT.connect(buyer1).approve(accessories.address, USDTPrice);
-    await BNB.connect(buyer1).approve(accessories.address, BNBPrice);
+    await USDT.connect(buyer1).approve(gameAsstes.address, USDTPrice);
+    await BNB.connect(buyer1).approve(gameAsstes.address, BNBPrice);
     
-    await CARS.connect(buyer1).setApprovalForAll(accessories.address, true);
-    await PLANES.connect(buyer1).setApprovalForAll(accessories.address, true);
+    await CARS.connect(buyer1).setApprovalForAll(gameAsstes.address, true);
+    await PLANES.connect(buyer1).setApprovalForAll(gameAsstes.address, true);
     
-    await accessories.connect(buyer1).buyItem(1,1);
+    await gameAsstes.connect(buyer1).mintAssets(1,1);
 
-    expect(await accessories.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+    // await rTKN.connect(buyer2).mintTokens(5)
 
-    expect(await USDT.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    expect(await BNB.balanceOf(accessories.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-    expect(await CARS.balanceOf(accessories.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
-    expect(await PLANES.balanceOf(accessories.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
+    // await USDT.connect(buyer2).mintTokens(1*3);
+    // await BNB.connect(buyer2).mintTokens(25*3);
+    
+    // await CARS.connect(buyer2).mintTokens(ethers.BigNumber.from("5"), 10*3)
+    // await PLANES.connect(buyer2).mintTokens(ethers.BigNumber.from("15"), 5*3)
+
+    // USDTPrice = (await gameAsstes.getItemPrice(1, USDT.address, 3))[1]
+    // BNBPrice = (await gameAsstes.getItemPrice(1, BNB.address, 3))[1]
+
+    // await USDT.connect(buyer2).approve(gameAsstes.address, USDTPrice);
+    // await BNB.connect(buyer2).approve(gameAsstes.address, BNBPrice);
+    
+    // await CARS.connect(buyer2).setApprovalForAll(gameAsstes.address, true);
+    // await PLANES.connect(buyer2).setApprovalForAll(gameAsstes.address, true);
+    
+    // await gameAsstes.connect(buyer2).buyItem(1,2);
+
+    expect(await gameAsstes.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+    // expect(await gameAsstes.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("2"))
+
+    expect(await USDT.balanceOf(gameAsstes.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
+    expect(await BNB.balanceOf(gameAsstes.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
+    expect(await CARS.balanceOf(gameAsstes.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
+    expect(await PLANES.balanceOf(gameAsstes.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
     
     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
@@ -275,17 +300,17 @@ describe("Accessories Test", function () {
   });
 
   it("Withdraw Test", async function () {
-    expect(await USDT.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await BNB.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await CARS.balanceOf(accessoriesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await PLANES.balanceOf(accessoriesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("0"));
+    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("0"));
 
-    await accessories.connect(accessoriesOwner).withdraw([USDT.address, BNB.address]);
-    await accessories.connect(accessoriesOwner).withdrawERC1155([CARS.address, PLANES.address], [5,15]);
+    await gameAsstes.connect(gameAsstesOwner).withdraw([USDT.address, BNB.address]);
+    await gameAsstes.connect(gameAsstesOwner).withdrawERC1155([CARS.address, PLANES.address], [5,15]);
 
-    expect(await USDT.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros));
-    expect(await BNB.balanceOf(accessoriesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros));
-    expect(await CARS.balanceOf(accessoriesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"));
-    expect(await PLANES.balanceOf(accessoriesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"));
+    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros));
+    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros));
+    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"));
+    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"));
   });
 });

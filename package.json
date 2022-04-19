@@ -10,16 +10,17 @@
     "lint-and-fix": "eslint . --ext .ts --fix",
     "codegen": "graph codegen",
     "build-graph": "graph build",
-    "copy-abis": "cp artifacts/contracts/Accessories.sol/Accessories.json abis/ && cp artifacts/contracts/AccessoriesFactory.sol/AccessoriesFactory.json abis/",
+    "hardhat-node": "hardhat node",
+    "copy-abis": "cp artifacts/contracts/GameAssets.sol/GameAssets.json abis/ && cp artifacts/contracts/GameAssetsFactory.sol/GameAssetsFactory.json abis/",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/blocks --version-label 1",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
-    "prepare:mumbai": "npx mustache config/mumbai_1.json subgraph.template.yaml subgraph.yaml",
-    "deploy:mumbai": "npm run prepare:mumbai && npm run copy-abis && npm run generate-schema && npm run codegen && npm run deploy",
-    "prepare:localhost": "npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
-    "deploy:localhost": "npm run prepare:localhost && npm run copy-abis && npm run codegen && npm run create-local && npm run deploy-local"
+    "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
+    "deploy:mumbai": "npm run prepare:mumbai && npm run codegen && npm run deploy",
+    "prepare:localhost": "npm run build && npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
+    "deploy:localhost": "npm run prepare:localhost && npm run create-local && npm run deploy-local"
   },
   "repository": {
     "type": "git",

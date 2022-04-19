@@ -1,13 +1,13 @@
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
-import { Accessories, AccessoriesConfigStruct, StateConfigStruct } from "../typechain/Accessories"
+import { GameAssets, GameAssetsConfigStruct, StateConfigStruct } from "../typechain/GameAssets"
+import { GameAssetsFactory } from "../typechain/GameAssetsFactory"
 import { Factory, NewChildEvent } from "../typechain/Factory"
 import { ContractTransaction, Contract, BigNumber, Overrides } from "ethers";
 import { Result } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { AccessoriesFactory } from "../typechain/AccessoriesFactory";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Accessories__factory } from "../typechain/factories/Accessories__factory";
+import { GameAssets__factory } from "../typechain/factories/GameAssets__factory";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -82,12 +82,12 @@ export enum AllStandardOps {
   length,
 }
 
-enum AccessoriesOpcode {
+enum GameAssetsOpcode {
   REPORT_AT_BLOCK = 0 + AllStandardOps.length
 }
 export const Opcode = {
   ...AllStandardOps,
-  ...AccessoriesOpcode,
+  ...GameAssetsOpcode,
 };
 
 
@@ -333,31 +333,31 @@ export const getChild = async (
   return child;
 };
 
-export const accessoriesDeploy = async (
-  accessoriesFactory: AccessoriesFactory,
+export const gameAssetsDeploy = async (
+  gameAssetsFactory: GameAssetsFactory,
   creator: SignerWithAddress,
-  accessoriesConfig: AccessoriesConfigStruct,
+  gameAssetsConfig: GameAssetsConfigStruct,
   override: Overrides = {}
-): Promise<Accessories> => {
+): Promise<GameAssets> => {
   // Creating child
-  const txDeploy = await accessoriesFactory
+  const txDeploy = await gameAssetsFactory
     .connect(creator)
     .createChildTyped(
-      accessoriesConfig,
+      gameAssetsConfig,
       override
     );
 
-  const accessories = new Accessories__factory(creator).attach(
-    await getChild(accessoriesFactory, txDeploy)
+  const gameAssets = new GameAssets__factory(creator).attach(
+    await getChild(gameAssetsFactory, txDeploy)
   );
 
-  await accessories.deployed();
+  await gameAssets.deployed();
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  accessories.deployTransaction = txDeploy;
+  gameAssets.deployTransaction = txDeploy;
 
-  return accessories;
+  return gameAssets;
 };
 
 export const fetchFile = (_path: string): string => {

@@ -1,71 +1,132 @@
-type AccessoriesFactory @entity {
+type GameAssetsFactory @entity {
+  #{GameAssetsFactory.address}
   id: ID!
   implementation: Bytes!
-  children: [Accessory!]
+  #GameAssets deployed by factory
+  children: [GameAsset!] 
 }
 
-type Accessory @entity {
+type GameAsset @entity {
+  #{GameAsset.address}
   id: ID!
-  totalItems: BigInt!
+  # Increment by 1 after each new assets creation
+  totalAssets: BigInt!
+  # Get it from _config from Initialize event for first time.
+  # After get it from TransferOwnership event.
   owner: Bytes!
+  # Get it from AdminChanged event
   admin: Bytes!
+  # Get it from BaseURIChanged event
   baseURI: String!
+  # Add Creator.id from CreatorAdded event
+  # Remove Creator.id from CreatorRemoved event
   creators: [Creator!]
-  classes: [ItemClass!]
-  items: [Item!]
-  deployBock: BigInt!
-  deployTimestam: BigInt!
+  # Add AssetClass.id from ClassCreated event
+  classes: [AssetClass!]
+  # Add Asset.id from AssetCreated event
+  assets: [Asset!]
+  # Add new Holder from TransferSingle or TransferBatch event
+  holders: [Holder!]
+  # event.block.number
+  deployBlock: BigInt!
+  # event.block.timestamp
+  deployTimestamp: BigInt!
 }
 
-type Item @entity {
+type Asset @entity {
+  #{GameAsset.address}-{event.params._asset._assetId} 
   id: ID!
-  itemId: BigInt!
+  # event.params._asset._assetId
+  assetId: BigInt!
+  # event.params._asset.creator
   creator: Bytes!
+  # event.params._asset.lootBoxId
   lootBoxID: BigInt!
+  # event.params._asset._priceConfig
   priceConfig: PriceConfig!
+  # event.params._asset._canMintConfig
   canMintConfig: CanMintConfig!
+  # event.params._asset.currencies
   currencies: [String!]!
-  itemClass: ItemClass!
+  # event.params._asset.assetClass
+  assetClass: AssetClass!
+  # event.params._asset.rarity
   rarity: Int!
-  creationBock: BigInt!
-  creationTimestam: BigInt!
+  # event.block.number
+  creationBlock: BigInt!
+  # event.block.timestamp
+  creationTimestamp: BigInt!
 }
 
-type ItemClass @entity{
+# create from ClassCreated event
+type AssetClass @entity{
+  #{GameAsset.address}-{event.params._classId} 
   id: ID!
+  # event.params._name
+  name: String!
+  # event.params._description
+  descciption: String!
+  # event.params._attributes
   attributes: [String!]!
 }
 
+# create from AssetCreated event
 type PriceConfig @entity {
+  #{GameAsset.address}-{event.params._asset._assetId}
   id: ID!
+  # event.params._asset._priceConfig.sources
   sources: [Bytes!]!
+  # event.params._asset._priceConfig.constants
   constants: [BigInt!]!
+  # event.params._asset._priceConfig.stackLength
   stackLength: BigInt!
+  # event.params._asset._priceConfig.argumentsLength
   argumentsLength: BigInt!
 }
 
+# create from AssetCreated event
 type CanMintConfig @entity {
+  #{GameAsset.address}-{event.params._asset._assetId}
   id: ID!
+  # event.params._asset._priceConfig.sources
   sources: [Bytes!]!
+  # event.params._asset._priceConfig.constants
   constants: [BigInt!]!
+  # event.params._asset._priceConfig.stackLength
   stackLength: BigInt!
+  # event.params._asset._priceConfig.argumentsLength
   argumentsLength: BigInt!
 }
 
+# Create from CreatorAdded event
 type Creator @entity{
+  #{GameAsset.address}-{event.params._addedCreator}
   id: ID!
+  # event.params._addedCreator
   address: Bytes!
+  # add Asset created by this creator.
+  # From AssetCreated event
+  assetesCreated: [Asset!]
 }
 
+# Create on every TransferSingle or TransferBatch event
 type Holder @entity {
+  #{GameAsset.address}-{event.params.to}
   id: ID!
+  # event.params.to
   address: Bytes!
-  itemsOwned: [ItemOwned!]
+  # Add AssetsOwned by this user on every TransferSingle or TransferBatch event
+  assetsOwned: [AssetsOwned!]
 }
 
-type ItemOwned @entity {
+type AssetsOwned @entity {
+  # {GameAsset.address}-{Receiver}-{event.params.id}
   id: ID!
-  item: Item!
-  itemId: BigInt!
+  # Asset that is minted or transferd
+  asset: Asset!
+  # Id od that Asset
+  assetId: BigInt!
+  # TotalNumber of assets Owned of AssetId
+  # Increament for every AssetId.
   count: BigInt!
 }
