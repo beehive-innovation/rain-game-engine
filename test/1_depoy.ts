@@ -224,6 +224,8 @@ describe("GameAssets Test", function () {
       currencies: currencies,
       assetClass: 1,
       rarity: Rarity.NONE,
+      name: "F1",
+      description: "BRUUUUMMM BRUUUMMM"
     }
 
     await gameAsstes.connect(creator).createNewAsset(assetConfig);

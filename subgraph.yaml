@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"
       abi: GameAssetsFactory
-      startBlock: 56
+      startBlock: 57
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -54,7 +54,7 @@ templates:
           handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
           handler: handleAssetCreated
         - event: AssetUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
           handler: handleAssetUpdated

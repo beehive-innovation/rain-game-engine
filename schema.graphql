@@ -36,6 +36,10 @@ type GameAsset @entity {
 type Asset @entity {
   #{GameAsset.address}-{event.params._asset._assetId} 
   id: ID!
+  # event.params._name
+  name: String!
+  # event.params._descciption
+  descciption: String!
   # event.params._asset._assetId
   assetId: BigInt!
   # event.params._asset.creator

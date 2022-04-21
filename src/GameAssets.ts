@@ -98,6 +98,8 @@ export function handleInitialize(event: Initialize): void {
 }
 export function handleAssetCreated(event: AssetCreated): void {
     let asset = new Asset(event.address.toHex() + "-" + event.params._assetId.toString());
+    asset.name = event.params._name;
+    asset.descciption = event.params._description;
     asset.assetId = event.params._assetId;
     asset.lootBoxID = event.params._asset.lootBoxId;
     asset.assetClass = getClass(event.address.toHex(), event.params._asset.assetClass);

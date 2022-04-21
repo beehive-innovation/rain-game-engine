@@ -54,7 +54,7 @@ templates:
           handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256))
+        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
           handler: handleAssetCreated
         - event: AssetUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
           handler: handleAssetUpdated

@@ -23,7 +23,6 @@ struct GameAssetsConfig {
 }
 
 enum Rarity {
-    NONE,
     COMMON,
     UNCOMMON,
     RARE,
@@ -36,6 +35,8 @@ enum Type {
 }
 
 struct AssetConfig {
+    string name;
+    string description;
     uint256 lootBoxId;
     StateConfig priceConfig;
     StateConfig canMintConfig;
@@ -103,7 +104,9 @@ contract GameAssets is
         uint256 _assetId,
         AssetDetails _asset,
         StateConfig _priceConfig,
-        StateConfig _canMintConfig
+        StateConfig _canMintConfig,
+        string _name,
+        string _description
     );
     event AssetUpdated(
         uint256 _assetId,
@@ -193,7 +196,9 @@ contract GameAssets is
             totalAssets,
             assets[totalAssets],
             _config.priceConfig,
-            _config.canMintConfig
+            _config.canMintConfig,
+            _config.name,
+            _config.description
         );
     }
 
@@ -300,11 +305,10 @@ contract GameAssets is
     }
 
     function getRarity(uint8 _rarity) internal pure returns (Rarity) {
-        if (_rarity == 0) return Rarity.NONE;
-        else if (_rarity == 1) return Rarity.COMMON;
-        else if (_rarity == 2) return Rarity.UNCOMMON;
-        else if (_rarity == 3) return Rarity.RARE;
-        else if (_rarity == 4) return Rarity.ULTRARARE;
+        if (_rarity == 0) return Rarity.COMMON;
+        else if (_rarity == 1) return Rarity.UNCOMMON;
+        else if (_rarity == 2) return Rarity.RARE;
+        else if (_rarity == 3) return Rarity.ULTRARARE;
         else revert("GameAssets::getRarity: Invalid Rarity");
     }
 
