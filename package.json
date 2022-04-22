@@ -20,7 +20,8 @@
     "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
     "deploy:mumbai": "npm run prepare:mumbai && npm run codegen && npm run deploy",
     "prepare:localhost": "npm run build && npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
-    "deploy:localhost": "npm run prepare:localhost && npm run create-local && npm run deploy-local"
+    "deploy:localhost": "npm run prepare:localhost && npm run create-local && npm run deploy-local",
+    "deploy-contract": "hardhat run scripts/deploy.ts"
   },
   "repository": {
     "type": "git",
