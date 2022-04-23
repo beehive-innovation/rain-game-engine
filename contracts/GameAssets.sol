@@ -1,18 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
-import "@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol";
 import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
 import {VMState, StateConfig} from "@beehiveinnovation/rain-protocol/contracts/vm/libraries/VMState.sol";
 import {AllStandardOps, ALL_STANDARD_OPS_START, ALL_STANDARD_OPS_LENGTH} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
@@ -20,18 +16,6 @@ import {AllStandardOps, ALL_STANDARD_OPS_START, ALL_STANDARD_OPS_LENGTH} from "@
 struct GameAssetsConfig {
     address _creator;
     string _baseURI;
-}
-
-enum Rarity {
-    COMMON,
-    UNCOMMON,
-    RARE,
-    ULTRARARE
-}
-
-enum Type {
-    ERC20,
-    ERC1155
 }
 
 struct AssetConfig {
@@ -46,7 +30,7 @@ struct AssetConfig {
 }
 
 contract GameAssets is
-    ERC1155Upgradeable,
+    ERC1155SupplyUpgradeable,
     ERC1155Holder,
     OwnableUpgradeable,
     RainVM,
@@ -54,7 +38,6 @@ contract GameAssets is
 {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.AddressSet;
-    using SafeMath for uint256;
     using Strings for uint256;
 
     uint256 internal constant LOCAL_OP_TIER_REPORT_AT_BLOCK = 0;
@@ -81,7 +64,7 @@ contract GameAssets is
         State canMintConfig;
         address[] currencies;
         uint256 assetClass;
-        Rarity rarity;
+        uint8 rarity;
         address creator;
     }
 
@@ -89,7 +72,7 @@ contract GameAssets is
 
     mapping(uint256 => AssetDetails) public assets;
 
-    string BaseURI = "";
+    string BaseURI;
 
     // EVENTS
     event Initialize(GameAssetsConfig config);
@@ -119,21 +102,19 @@ contract GameAssets is
     // EVENTS END
 
     modifier canMint(uint256 _assetId) {
-        AssetDetails memory asset = assets[_assetId];
-
-        State memory _state = asset.canMintConfig;
+        State memory _state = assets[_assetId].canMintConfig;
         eval("", _state, 0);
 
         require(
             _state.stack[_state.stackIndex - 1] == 1,
-            "GameAssets::canMint: Address does not satisfy the mint Conditions."
+            "Unsatisfied conditions"
         );
         _;
     }
 
     function initialize(GameAssetsConfig memory _config) external initializer {
         BaseURI = _config._baseURI;
-        __ERC1155_init(_config._baseURI);
+        __ERC1155Supply_init();
         __Ownable_init();
         transferOwnership(_config._creator);
         emit Initialize(_config);
@@ -151,13 +132,13 @@ contract GameAssets is
         override
         returns (string memory)
     {
-        require(_tokenId > 0, "GameAssets:uri: Invalid TokenId.");
+        require(_tokenId > 0, "Invalid TokenId.");
         return
             string(
                 abi.encodePacked(
                     BaseURI,
                     "/",
-                    Strings.toHexString(uint256(uint160(address(this))), 20),
+                    Strings.toHexString(uint160(address(this)), 20),
                     "/",
                     _tokenId.toString(),
                     ".json"
@@ -170,16 +151,13 @@ contract GameAssets is
         string memory _description,
         string[] memory _attributes
     ) external {
-        Classes.add(Classes.length().add(1));
+        Classes.add(Classes.length() + 1);
         emit ClassCreated(Classes.length(), _attributes, _name, _description);
     }
 
     function createNewAsset(AssetConfig memory _config) external {
-        require(
-            Creators.contains(_msgSender()),
-            "GameAssets:createNewAsset: Only Creators can create assets"
-        );
-        totalAssets = totalAssets.add(1);
+        require(Creators.contains(_msgSender()), "Creators Only");
+        totalAssets = totalAssets + 1;
 
         assets[totalAssets] = AssetDetails(
             _config.lootBoxId,
@@ -187,8 +165,8 @@ contract GameAssets is
             _restore(_snapshot(_newState(_config.priceConfig))),
             _restore(_snapshot(_newState(_config.canMintConfig))),
             _config.currencies,
-            getClass(_config.assetClass),
-            getRarity((_config.rarity)),
+            _config.assetClass,
+            _config.rarity,
             _msgSender()
         );
 
@@ -207,10 +185,7 @@ contract GameAssets is
         uint256 _lootBoxId,
         StateConfig memory _canMintConfig
     ) external {
-        require(
-            _msgSender() == assets[_assetId].creator,
-            "GameAssets::updateAsset: Only Creator can update the AssetDetails."
-        );
+        require(_msgSender() == assets[_assetId].creator, "Creator Only");
 
         assets[_assetId].lootBoxId = _lootBoxId;
         assets[_assetId].canMintConfig = _restore(
@@ -226,22 +201,15 @@ contract GameAssets is
         uint256 _units
     ) public view returns (uint256[] memory) {
         uint256 stackIndex;
-        bool flag = false;
-        AssetDetails memory asset = assets[_assetId];
-        for (uint256 i = 0; i < asset.currencies.length; i = i + 1) {
-            if (asset.currencies[i] == _paymentToken) {
-                stackIndex = i;
-                flag = true;
-                break;
-            }
+        while (_paymentToken != assets[_assetId].currencies[stackIndex]) {
+            stackIndex++;
         }
-        require(flag, "GameAssets::getAssetPrice: Unsupported payment token.");
 
-        State memory _state = asset.priceConfig;
+        State memory _state = assets[_assetId].priceConfig;
         eval(abi.encode(1), _state, stackIndex);
-        _state.stack[_state.stackIndex - 1] = _state
-            .stack[_state.stackIndex - 1]
-            .mul(_units);
+        _state.stack[_state.stackIndex - 1] =
+            _state.stack[_state.stackIndex - 1] *
+            _units;
 
         return _state.stack;
     }
@@ -250,26 +218,22 @@ contract GameAssets is
         external
         canMint(_assetId)
     {
-        require(
-            _assetId <= totalAssets,
-            "GameAssets::mintAssets: Invalid AssetId."
-        );
-        AssetDetails memory asset = assets[_assetId];
-        for (uint256 i = 0; i < asset.currencies.length; i = i + 1) {
+        require(_assetId <= totalAssets, "Invalid AssetId");
+        for (uint256 i = 0; i < assets[_assetId].currencies.length; i = i + 1) {
             uint256[] memory stack = getAssetPrice(
                 _assetId,
-                asset.currencies[i],
+                assets[_assetId].currencies[i],
                 _units
             );
             // console.log(stack[0], stack[1], stack[2]);
-            if (stack[0] == uint256(Type.ERC20)) {
-                IERC20(asset.currencies[i]).transferFrom(
+            if (stack[0] == 0) {
+                IERC20(assets[_assetId].currencies[i]).transferFrom(
                     msg.sender,
                     address(this),
                     stack[1]
                 );
-            } else if (stack[0] == uint256(Type.ERC1155)) {
-                IERC1155(asset.currencies[i]).safeTransferFrom(
+            } else if (stack[0] == 1) {
+                IERC1155(assets[_assetId].currencies[i]).safeTransferFrom(
                     msg.sender,
                     address(this),
                     stack[1],
@@ -282,10 +246,7 @@ contract GameAssets is
     }
 
     function addCreator(address _creator) external onlyOwner {
-        require(
-            _creator != address(0),
-            "GameAssets::addCreator: Invalid Creator address."
-        );
+        require(_creator != address(0), "Invalid address");
         Creators.add(_creator);
         emit CreatorAdded(_creator);
     }
@@ -296,25 +257,9 @@ contract GameAssets is
     }
 
     function setAdmin(address _admin) external onlyOwner {
-        require(
-            _admin != address(0),
-            "GameAssets::addCreator: Invalid Creator address."
-        );
+        require(_admin != address(0), "Invalid address");
         Admin = _admin;
         emit AdminChanged(_admin);
-    }
-
-    function getRarity(uint8 _rarity) internal pure returns (Rarity) {
-        if (_rarity == 0) return Rarity.COMMON;
-        else if (_rarity == 1) return Rarity.UNCOMMON;
-        else if (_rarity == 2) return Rarity.RARE;
-        else if (_rarity == 3) return Rarity.ULTRARARE;
-        else revert("GameAssets::getRarity: Invalid Rarity");
-    }
-
-    function getClass(uint256 _class) internal view returns (uint256) {
-        if (Classes.contains(_class)) return _class;
-        else revert("GameAssets::getClass: Invalid class value.");
     }
 
     function withdraw(address[] memory _tokenAddresses) public onlyOwner {
@@ -370,14 +315,6 @@ contract GameAssets is
                 state_.stackIndex++;
             }
         }
-    }
-
-    function getCreators() external view returns (address[] memory) {
-        return Creators.values();
-    }
-
-    function getClasses() external view returns (uint256[] memory) {
-        return Classes.values();
     }
 
     function supportsInterface(bytes4 interfaceId)

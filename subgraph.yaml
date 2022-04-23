@@ -6,9 +6,9 @@ dataSources:
     name: GameAssetsFactory
     network: localhost
     source:
-      address: "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
       abi: GameAssetsFactory
-      startBlock: 57
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

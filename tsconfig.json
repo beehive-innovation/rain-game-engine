@@ -1,5 +1,5 @@
 {
-    "include": ["./test", "src"],
+    "include": ["./test", "./sctipts","src"],
     "exclude": ["node_modules/*", "@graphprotocol/graph-ts/types/tsconfig.base.json"],
     "compilerOptions": {
       "target": "ES2020",

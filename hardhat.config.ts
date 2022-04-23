@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig } from "hardhat/config";
+import "hardhat-contract-sizer";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 
@@ -34,7 +35,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 100000,
+            runs: 100,
           },
           metadata: {
             useLiteralContent: true,
@@ -46,7 +47,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 100000,
+            runs: 200,
           },
         },
       },
@@ -72,7 +73,7 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 600000,
-  },
+  }
 };
 
 export default config;
