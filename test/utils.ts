@@ -32,6 +32,11 @@ export enum Rarity {
     ULTRARARE
 }
 
+export enum Role {
+  Admin,
+  Creator
+}
+
 export enum AllStandardOps {
   SKIP,
   VAL,

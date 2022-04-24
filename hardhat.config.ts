@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 
 import { HardhatUserConfig } from "hardhat/config";
 import "hardhat-contract-sizer";
+import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 

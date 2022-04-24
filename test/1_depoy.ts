@@ -10,7 +10,7 @@ import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155"
 import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
 
-import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, gameAssetsDeploy, fetchFile, writeFile, exec, Type } from "./utils"
+import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, gameAssetsDeploy, fetchFile, writeFile, exec, Type, Role } from "./utils"
 import { Contract } from "ethers";
 import path from "path";
 import { GameAssetsFactory__factory } from "../typechain/factories/GameAssetsFactory__factory";
@@ -130,7 +130,7 @@ describe("GameAssets Test", function () {
     expect(gameAsstes.address).to.be.not.null;
     expect(await gameAsstes.owner()).to.equals(gameAsstesOwner.address);
     expect(await gameAsstes.uri(1)).to.equals(`www.baseURI.com/metadata/${gameAsstes.address.toLowerCase()}/1.json`);
-    await gameAsstes.connect(gameAsstesOwner).setAdmin(admin.address);
+    await gameAsstes.connect(gameAsstesOwner).setRole(admin.address, Role.Admin);
   });
 
   it("Should deploy all tokens", async function () {
@@ -142,8 +142,8 @@ describe("GameAssets Test", function () {
   });
 
   it("Should add creator",async function () {
-    await gameAsstes.connect(gameAsstesOwner).addCreator(creator.address);
-    await gameAsstes.connect(gameAsstesOwner).addCreator(creator2.address);
+    await gameAsstes.connect(gameAsstesOwner).setRole(creator.address, Role.Creator);
+    await gameAsstes.connect(gameAsstesOwner).setRole(creator2.address, Role.Creator);
 
     // let expected_creator = await gameAsstes.getCreators()
     // expect(expected_creator).to.deep.include(creator.address);
@@ -224,10 +224,11 @@ describe("GameAssets Test", function () {
       assetClass: 1,
       rarity: Rarity.NONE,
       name: "F1",
-      description: "BRUUUUMMM BRUUUMMM"
+      description: "BRUUUUMMM BRUUUMMM",
+      creator: creator.address
     }
 
-    await gameAsstes.connect(creator).createNewAsset(assetConfig);
+    await gameAsstes.connect(gameAsstesOwner).createNewAsset(assetConfig);
 
     let assetData = await gameAsstes.assets(1)
 
@@ -269,29 +270,14 @@ describe("GameAssets Test", function () {
     expect(await gameAsstes.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
     // expect(await gameAsstes.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("2"))
 
-    expect(await USDT.balanceOf(gameAsstes.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    expect(await BNB.balanceOf(gameAsstes.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-    expect(await CARS.balanceOf(gameAsstes.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
-    expect(await PLANES.balanceOf(gameAsstes.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
+    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
+    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
+    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
+    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
     
     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
     expect(await CARS.balanceOf(buyer1.address, 5)).to.deep.equals(ethers.BigNumber.from("0"))
     expect(await PLANES.balanceOf(buyer1.address, 15)).to.deep.equals(ethers.BigNumber.from("0"))
-  });
-
-  it("Withdraw Test", async function () {
-    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("0"));
-    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("0"));
-
-    await gameAsstes.connect(gameAsstesOwner).withdraw([USDT.address, BNB.address]);
-    await gameAsstes.connect(gameAsstesOwner).withdrawERC1155([CARS.address, PLANES.address], [5,15]);
-
-    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros));
-    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros));
-    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"));
-    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"));
   });
 });
