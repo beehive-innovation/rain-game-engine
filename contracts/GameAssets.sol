@@ -1,10 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
 import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
@@ -24,16 +21,11 @@ struct AssetConfig {
     StateConfig canMintConfig;
     address[] currencies;
     uint256 assetClass;
-    uint8 rarity;
+    uint256 rarity;
     address creator;
 }
 
-contract GameAssets is
-    ERC1155SupplyUpgradeable,
-    OwnableUpgradeable,
-    RainVM,
-    VMState
-{
+contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
     using Strings for uint256;
 
     uint256 internal constant LOCAL_OP_TIER_REPORT_AT_BLOCK = 0;
@@ -52,19 +44,17 @@ contract GameAssets is
         State canMintConfig;
         address[] currencies;
         uint256 assetClass;
-        uint8 rarity;
+        uint256 rarity;
         address creator;
     }
 
     mapping(uint256 => AssetDetails) public assets;
-    mapping(address => uint8) public roleOf;
 
     string BaseURI;
 
     // EVENTS
     event Initialize(GameAssetsConfig config);
-    event BaseURIChanged(string _baseURI);
-    event ClassCreated(string[] _attributes, string _name, string _description);
+    event ClassCreated(string[] _classData);
     event AssetCreated(
         uint256 _assetId,
         AssetDetails _asset,
@@ -73,30 +63,22 @@ contract GameAssets is
         string _name,
         string _description
     );
-    event AssetUpdated(
-        uint256 _assetId,
-        AssetDetails _asset,
-        StateConfig _canMintConfig
-    );
-    event RoleChanged(address _account, uint8 _role);
+
     // EVENTS END
 
-    modifier canMint(uint256 _assetId) {
-        State memory _state = assets[_assetId].canMintConfig;
-        eval("", _state, 0);
+    function canMint(uint256 _assetId) public {
+        State memory state_ = assets[_assetId].canMintConfig;
+        eval("", state_, 0);
 
         require(
-            _state.stack[_state.stackIndex - 1] == 1,
+            state_.stack[state_.stackIndex - 1] == 1,
             "Unsatisfied conditions"
         );
-        _;
     }
 
     function initialize(GameAssetsConfig memory _config) external initializer {
         BaseURI = _config._baseURI;
         __ERC1155Supply_init();
-        __Ownable_init();
-        transferOwnership(_config._creator);
         emit Initialize(_config);
     }
 
@@ -121,15 +103,11 @@ contract GameAssets is
             );
     }
 
-    function createClass(
-        string memory _name,
-        string memory _description,
-        string[] memory _attributes
-    ) external onlyOwner {
-        emit ClassCreated(_attributes, _name, _description);
+    function createClass(string[] memory _classData) external {
+        emit ClassCreated(_classData);
     }
 
-    function createNewAsset(AssetConfig memory _config) external onlyOwner {
+    function createNewAsset(AssetConfig memory _config) external {
         totalAssets = totalAssets + 1;
 
         assets[totalAssets] = AssetDetails(
@@ -153,72 +131,52 @@ contract GameAssets is
         );
     }
 
-    function updateAsset(
-        uint256 _assetId,
-        uint256 _lootBoxId,
-        StateConfig memory _canMintConfig
-    ) external onlyOwner {
-        assets[_assetId].lootBoxId = _lootBoxId;
-        assets[_assetId].canMintConfig = _restore(
-            _snapshot(_newState(_canMintConfig))
-        );
-
-        emit AssetUpdated(totalAssets, assets[totalAssets], _canMintConfig);
-    }
-
     function getAssetPrice(
         uint256 _assetId,
         address _paymentToken,
         uint256 _units
     ) public view returns (uint256[] memory) {
-        uint256 stackIndex;
-        while (_paymentToken != assets[_assetId].currencies[stackIndex]) {
-            stackIndex++;
+        uint256 sourceIndex;
+        while (_paymentToken != assets[_assetId].currencies[sourceIndex]) {
+            sourceIndex++;
         }
 
-        State memory _state = assets[_assetId].priceConfig;
-        eval("", _state, stackIndex);
-        _state.stack[_state.stackIndex - 1] =
-            _state.stack[_state.stackIndex - 1] *
+        State memory state_ = assets[_assetId].priceConfig;
+        eval("", state_, sourceIndex);
+        state_.stack[state_.stackIndex - 1] =
+            state_.stack[state_.stackIndex - 1] *
             _units;
 
-        return _state.stack;
+        return state_.stack;
     }
 
-    function mintAssets(uint256 _assetId, uint256 _units)
-        external
-        canMint(_assetId)
-    {
+    function mintAssets(uint256 _assetId, uint256 _units) external {
         require(_assetId <= totalAssets, "Invalid AssetId");
+        canMint(_assetId);
         for (uint256 i = 0; i < assets[_assetId].currencies.length; i = i + 1) {
-            uint256[] memory stack = getAssetPrice(
+            uint256[] memory stack_ = getAssetPrice(
                 _assetId,
                 assets[_assetId].currencies[i],
                 _units
             );
             // console.log(stack[0], stack[1], stack[2]);
-            if (stack[0] == 0) {
-                IERC20(assets[_assetId].currencies[i]).transferFrom(
+            if (stack_[0] == 0) {
+                ITransfer(assets[_assetId].currencies[i]).transferFrom(
                     msg.sender,
-                    owner(),
-                    stack[1]
+                    assets[_assetId].creator,
+                    stack_[1]
                 );
-            } else if (stack[0] == 1) {
-                IERC1155(assets[_assetId].currencies[i]).safeTransferFrom(
+            } else if (stack_[0] == 1) {
+                ITransfer(assets[_assetId].currencies[i]).safeTransferFrom(
                     msg.sender,
-                    owner(),
-                    stack[1],
-                    stack[2],
+                    assets[_assetId].creator,
+                    stack_[1],
+                    stack_[2],
                     ""
                 );
             }
         }
         _mint(_msgSender(), _assetId, _units, "");
-    }
-
-    function setRole(address _account, uint8 _role) external onlyOwner {
-        roleOf[_account] = _role;
-        emit RoleChanged(_account, _role);
     }
 
     function applyOp(
@@ -247,4 +205,20 @@ contract GameAssets is
             }
         }
     }
+}
+
+interface ITransfer {
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) external;
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
 }

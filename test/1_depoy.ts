@@ -128,9 +128,7 @@ before("Deploy GameAssets Contract and subgraph", async function () {
 describe("GameAssets Test", function () {
   it("Contract should be deployed.", async function () {
     expect(gameAsstes.address).to.be.not.null;
-    expect(await gameAsstes.owner()).to.equals(gameAsstesOwner.address);
     expect(await gameAsstes.uri(1)).to.equals(`www.baseURI.com/metadata/${gameAsstes.address.toLowerCase()}/1.json`);
-    await gameAsstes.connect(gameAsstesOwner).setRole(admin.address, Role.Admin);
   });
 
   it("Should deploy all tokens", async function () {
@@ -139,15 +137,6 @@ describe("GameAssets Test", function () {
     expect(SOL.address).to.be.not.null;
     expect(XRP.address).to.be.not.null;
     // console.log(USDT.address, BNB.address, SOL.address, XRP.address)
-  });
-
-  it("Should add creator",async function () {
-    await gameAsstes.connect(gameAsstesOwner).setRole(creator.address, Role.Creator);
-    await gameAsstes.connect(gameAsstesOwner).setRole(creator2.address, Role.Creator);
-
-    // let expected_creator = await gameAsstes.getCreators()
-    // expect(expected_creator).to.deep.include(creator.address);
-    // expect(expected_creator).to.deep.include(creator2.address);
   });
 
   it("Should create asset from creator.", async function () {
@@ -182,8 +171,8 @@ describe("GameAssets Test", function () {
 
     const classCarName = "Car";
     const classCarDescription = "A really good car.";
-    const classCarAttributes = ["Top speed", "Acceleration", "Break", "Handling", "Weight"]
-    await gameAsstes.createClass(classCarName, classCarDescription, classCarAttributes);
+    const classCarAttributes = [classCarName, classCarDescription, "Top speed", "Acceleration", "Break", "Handling", "Weight"]
+    await gameAsstes.createClass(classCarAttributes);
 
     // expect(await gameAsstes.getClasses()).to.deep.include(ethers.BigNumber.from("1"))
 
@@ -242,7 +231,7 @@ describe("GameAssets Test", function () {
     expect(expectAsset).to.deep.equals({
       lootBoxId: ethers.BigNumber.from("0"),
       assetClass: ethers.BigNumber.from("1"),
-      rarity: Rarity.NONE,
+      rarity: ethers.BigNumber.from(Rarity.NONE),
       creator: creator.address,
     })
   });
@@ -270,10 +259,10 @@ describe("GameAssets Test", function () {
     expect(await gameAsstes.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
     // expect(await gameAsstes.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("2"))
 
-    expect(await USDT.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    expect(await BNB.balanceOf(gameAsstesOwner.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-    expect(await CARS.balanceOf(gameAsstesOwner.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
-    expect(await PLANES.balanceOf(gameAsstesOwner.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
+    expect(await USDT.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
+    expect(await BNB.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
+    expect(await CARS.balanceOf(creator.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
+    expect(await PLANES.balanceOf(creator.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
     
     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
