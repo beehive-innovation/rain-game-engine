@@ -70,6 +70,10 @@ const config: HardhatUserConfig = {
     hardhat: {
       blockGasLimit: 30000000,
       allowUnlimitedContractSize: true,
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.infura.io/v3/${process.env.API_KEY}`,
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   mocha: {

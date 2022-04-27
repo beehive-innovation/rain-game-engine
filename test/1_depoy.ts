@@ -122,7 +122,7 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  // exec(`npm run deploy:localhost`);
+  exec(`npm run deploy:localhost`);
 })
 
 describe("GameAssets Test", function () {

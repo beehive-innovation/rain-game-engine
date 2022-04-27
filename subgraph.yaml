@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: GameAssetsFactory
-    network: localhost
+    network: mumbai
     source:
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      address: "0xc782cF76e5827B3c2563a06EbA7B400deEe119a7"
       abi: GameAssetsFactory
-      startBlock: 1
+      startBlock: 26104657
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -28,7 +28,7 @@ dataSources:
 templates:
   - kind: ethereum
     name: GameAssetsTemplate
-    network: localhost
+    network: mumbai
     source:
       abi: GameAssets
     mapping:
@@ -42,24 +42,12 @@ templates:
         - name: GameAssets
           file: ./abis/GameAssets.json
       eventHandlers:
-        - event: AdminChanged(address)
-          handler: handleAdminChanged
-        - event: BaseURIChanged(string)
-          handler: BaseURIChanged
-        - event: ClassCreated(uint256,string[],string,string)
+        - event: ClassCreated(string[])
           handler: handleClassCreated
-        - event: CreatorAdded(address)
-          handler: handleCreatorAdded
-        - event: CreatorRemoved(address)
-          handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
+        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint256,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
           handler: handleAssetCreated
-        - event: AssetUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
-          handler: handleAssetUpdated
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
         - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
           handler: handleSnapshot
         - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])

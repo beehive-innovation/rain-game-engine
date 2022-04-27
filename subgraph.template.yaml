@@ -42,24 +42,12 @@ templates:
         - name: GameAssets
           file: ./abis/GameAssets.json
       eventHandlers:
-        - event: AdminChanged(address)
-          handler: handleAdminChanged
-        - event: BaseURIChanged(string)
-          handler: BaseURIChanged
-        - event: ClassCreated(uint256,string[],string,string)
+        - event: ClassCreated(string[])
           handler: handleClassCreated
-        - event: CreatorAdded(address)
-          handler: handleCreatorAdded
-        - event: CreatorRemoved(address)
-          handler: handleCreatorRemoved
         - event: Initialize((address,string))
           handler: handleInitialize
-        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
+        - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint256,address),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)
           handler: handleAssetCreated
-        - event: AssetUpdated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],uint256,uint8,address),(bytes[],uint256[],uint256,uint256))
-          handler: handleAssetUpdated
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
         - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
           handler: handleSnapshot
         - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])

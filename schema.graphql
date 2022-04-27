@@ -32,6 +32,8 @@ type GameAsset @entity {
   deployBlock: BigInt! # event.block.number
   "Timestamp at which GameAssets contract deployed"
   deployTimestamp: BigInt! # event.block.timestamp
+  "Total numbers of Classes"
+  classCount: BigInt!
 }
 
 type Asset @entity {
@@ -56,7 +58,7 @@ type Asset @entity {
   "Class of this Asset"
   assetClass: AssetClass! # event.params._asset.assetClass
   "Rarity of this asset"
-  rarity: Int! # event.params._asset.rarity
+  rarity: BigInt! # event.params._asset.rarity
   "Block number at which GameAssets contract deployed"
   creationBlock: BigInt! # event.block.number
   "Timestamp at which GameAssets contract deployed"

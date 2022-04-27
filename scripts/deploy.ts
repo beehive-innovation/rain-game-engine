@@ -6,7 +6,7 @@ async function main() {
   const GameAssetsFactoryFactory = await hre.ethers.getContractFactory(
     "GameAssetsFactory"
   );
-  const gameAssetsFactory = await GameAssetsFactoryFactory.deploy();
+  const gameAssetsFactory = await GameAssetsFactoryFactory.deploy({gasLimit: 10000000});
 
   await gameAssetsFactory.deployed();
 

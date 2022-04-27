@@ -11,7 +11,7 @@ async function main() {
 
   let owner = signers[0];
     // const GameAssetsFactory = await ethers.getContractFactory("GameAssetsFactory")
-    let gameAssetsFactory = await new GameAssetsFactory__factory(owner).deploy({gasLimit: 1500000});
+    let gameAssetsFactory = await new GameAssetsFactory__factory(owner).deploy({gasLimit: 10000000});
     await gameAssetsFactory.deployed()
 
     const pathExampleConfig = path.resolve(__dirname, "../config/mumbai.json");
@@ -26,12 +26,12 @@ async function main() {
     const pathConfigLocal = path.resolve(__dirname, "../config/mumbai.json");
     writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-    await sleep(20);
-    await env.run("verify:verify", {
-    address: gameAssetsFactory.address,
-    contract: "contracts/GameAssetsFactory.sol:GameAssetsFactory",
-    constructorArguments: [],
-  })
+  //   await sleep(20);
+  //   await env.run("verify:verify", {
+  //   address: gameAssetsFactory.address,
+  //   contract: "contracts/GameAssetsFactory.sol:GameAssetsFactory",
+  //   constructorArguments: [],
+  // })
   }
   
   main()
