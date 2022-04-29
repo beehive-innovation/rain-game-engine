@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: GameAssetsFactory
-    network: mumbai
+    network: localhost
     source:
-      address: "0xc782cF76e5827B3c2563a06EbA7B400deEe119a7"
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
       abi: GameAssetsFactory
-      startBlock: 26104657
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -28,7 +28,7 @@ dataSources:
 templates:
   - kind: ethereum
     name: GameAssetsTemplate
-    network: mumbai
+    network: localhost
     source:
       abi: GameAssets
     mapping:

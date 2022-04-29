@@ -11,9 +11,10 @@ import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFacto
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
 
 import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, gameAssetsDeploy, fetchFile, writeFile, exec, Type, Role } from "./utils"
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import path from "path";
 import { GameAssetsFactory__factory } from "../typechain/factories/GameAssetsFactory__factory";
+import { price, toScript } from "./VMScript";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
@@ -122,7 +123,7 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  exec(`npm run deploy:localhost`);
+  // exec(`npm run deploy:localhost`);
 })
 
 describe("GameAssets Test", function () {
@@ -159,6 +160,41 @@ describe("GameAssets Test", function () {
 
 
     const sources = [USDTSource, BNBource, CARSSource, PLANESSource];
+
+    let script: price[] = [
+      {
+        currancy:{
+          type: Type.ERC20,
+          address: USDT.address,
+        },
+        amount: expectedUSDTPrice
+      },
+      {
+        currancy:{
+          type: Type.ERC20,
+          address: BNB.address,
+        },
+        amount: expectedBNBPrice
+      },
+      {
+        currancy:{
+          type: Type.ERC1155,
+          address: CARS.address,
+          tokenId: 5,
+        },
+        amount: ethers.BigNumber.from("10")
+      },
+      {
+        currancy:{
+          type: Type.ERC1155,
+          address: PLANES.address,
+          tokenId: 15,
+        },
+        amount: ethers.BigNumber.from("5")
+      },
+    ] ;
+
+    let state = toScript(script, 3);
 
     const priceConfig: VMState = {
       sources,
@@ -207,7 +243,7 @@ describe("GameAssets Test", function () {
 
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,
-      priceConfig: priceConfig,
+      priceConfig: state,
       canMintConfig: canMintConfig,
       currencies: currencies,
       assetClass: 1,
@@ -220,7 +256,6 @@ describe("GameAssets Test", function () {
     await gameAsstes.connect(gameAsstesOwner).createNewAsset(assetConfig);
 
     let assetData = await gameAsstes.assets(1)
-
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
       assetClass: assetData.assetClass,
