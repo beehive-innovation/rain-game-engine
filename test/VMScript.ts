@@ -8,7 +8,7 @@ export type currency = {
 }
 
 export type price = {
-    currancy: currency;
+    currency: currency;
     amount: ethers.BigNumber;
 }
 
@@ -19,15 +19,15 @@ export function toScript(script: price[], stackLength: number): VMState {
     let i;
     for(i=0;i<script.length;i++){
         let obj = script[i];
-        console.log(obj.currancy.type)
-        if(obj.currancy.type == Type.ERC1155){
+        console.log(obj.currency.type)
+        if(obj.currency.type == Type.ERC1155){
             sources[i] = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)])
-            constants[constants.length] = obj.currancy.type;
-            constants[constants.length] = obj.currancy.tokenId;
+            constants[constants.length] = obj.currency.type;
+            constants[constants.length] = obj.currency.tokenId;
             constants[constants.length] = obj.amount;
         }else{
             sources[i] = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)])
-            constants[constants.length] = obj.currancy.type;
+            constants[constants.length] = obj.currency.type;
             constants[constants.length] = obj.amount;
         }
     }
