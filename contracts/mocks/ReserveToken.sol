@@ -20,11 +20,10 @@ contract ReserveToken is ERC20, ERC20Burnable {
     uint256 public constant TOTAL_SUPPLY = 10**(DECIMALS + 9);
 
     /// Define and mint the erc20 token.
-    constructor() ERC20("USD Classic", "USDCC") {
-    }
+    constructor() ERC20("USD Classic", "USDCC") {}
 
     function mintTokens(uint256 _amount) external {
-        _mint(msg.sender, _amount * 10 ** 18);
+        _mint(msg.sender, _amount * 10**18);
     }
 
     function decimals() public pure override returns (uint8) {

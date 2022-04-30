@@ -1,13 +1,10 @@
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
-import { GameAssets, GameAssetsConfigStruct, StateConfigStruct } from "../typechain/GameAssets"
-import { GameAssetsFactory } from "../typechain/GameAssetsFactory"
+import { StateConfigStruct } from "../typechain/GameAssets"
 import { Factory, NewChildEvent } from "../typechain/Factory"
 import { ContractTransaction, Contract, BigNumber, Overrides } from "ethers";
 import { Result } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { GameAssets__factory } from "../typechain/factories/GameAssets__factory";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -22,6 +19,14 @@ export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 export enum Type {
   ERC20,
   ERC1155
+}
+
+export enum Conditions {
+  BLOCK_NUMBER,
+  BALANCE_TIER,
+  ERC20BALANCE,
+  ERC721BALANCE,
+  ERC1155BALANCE,
 }
 
 export enum Rarity {
@@ -336,33 +341,6 @@ export const getChild = async (
   }
 
   return child;
-};
-
-export const gameAssetsDeploy = async (
-  gameAssetsFactory: GameAssetsFactory,
-  creator: SignerWithAddress,
-  gameAssetsConfig: GameAssetsConfigStruct,
-  override: Overrides = {}
-): Promise<GameAssets> => {
-  // Creating child
-  const txDeploy = await gameAssetsFactory
-    .connect(creator)
-    .createChildTyped(
-      gameAssetsConfig,
-      override
-    );
-
-  const gameAssets = new GameAssets__factory(creator).attach(
-    await getChild(gameAssetsFactory, txDeploy)
-  );
-
-  await gameAssets.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  gameAssets.deployTransaction = txDeploy;
-
-  return gameAssets;
 };
 
 export const fetchFile = (_path: string): string => {

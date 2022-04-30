@@ -11,7 +11,7 @@
     "codegen": "graph codegen",
     "build-graph": "graph build",
     "hardhat-node": "hardhat node",
-    "copy-abis": "cp artifacts/contracts/GameAssets.sol/GameAssets.json abis/ && cp artifacts/contracts/GameAssetsFactory.sol/GameAssetsFactory.json abis/",
+    "copy-abis": "cp artifacts/contracts/GameAssets.sol/GameAssets.json abis/",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",

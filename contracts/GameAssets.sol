@@ -1,17 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
 import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
 import {VMState, StateConfig} from "@beehiveinnovation/rain-protocol/contracts/vm/libraries/VMState.sol";
 import {AllStandardOps, ALL_STANDARD_OPS_START, ALL_STANDARD_OPS_LENGTH} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
-
-struct GameAssetsConfig {
-    address _creator;
-    string _baseURI;
-}
 
 struct AssetConfig {
     string name;
@@ -20,12 +15,11 @@ struct AssetConfig {
     StateConfig priceConfig;
     StateConfig canMintConfig;
     address[] currencies;
-    uint256 assetClass;
-    uint256 rarity;
-    address creator;
+    address recepient;
+    string tokenURI;
 }
 
-contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
+contract GameAssets is ERC1155Supply, RainVM, VMState {
     using Strings for uint256;
 
     uint256 internal constant LOCAL_OP_TIER_REPORT_AT_BLOCK = 0;
@@ -43,17 +37,14 @@ contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
         State priceConfig;
         State canMintConfig;
         address[] currencies;
-        uint256 assetClass;
-        uint256 rarity;
-        address creator;
+        address recepient;
+        string tokenURI;
     }
 
     mapping(uint256 => AssetDetails) public assets;
 
-    string BaseURI;
-
     // EVENTS
-    event Initialize(GameAssetsConfig config);
+    event Initialize(address _deployer);
     event ClassCreated(string[] _classData);
     event AssetCreated(
         uint256 _assetId,
@@ -66,20 +57,15 @@ contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
 
     // EVENTS END
 
+    constructor() ERC1155("") {
+        emit Initialize(msg.sender);
+    }
+
     function canMint(uint256 _assetId) public {
         State memory state_ = assets[_assetId].canMintConfig;
         eval("", state_, 0);
 
-        require(
-            state_.stack[state_.stackIndex - 1] == 1,
-            "Unsatisfied conditions"
-        );
-    }
-
-    function initialize(GameAssetsConfig memory _config) external initializer {
-        BaseURI = _config._baseURI;
-        __ERC1155Supply_init();
-        emit Initialize(_config);
+        require(state_.stack[state_.stackIndex - 1] == 1, "Can not mint.");
     }
 
     function uri(uint256 _tokenId)
@@ -89,22 +75,8 @@ contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
         override
         returns (string memory)
     {
-        require(_tokenId > 0, "Invalid TokenId.");
-        return
-            string(
-                abi.encodePacked(
-                    BaseURI,
-                    "/",
-                    Strings.toHexString(uint160(address(this)), 20),
-                    "/",
-                    _tokenId.toString(),
-                    ".json"
-                )
-            );
-    }
-
-    function createClass(string[] memory _classData) external {
-        emit ClassCreated(_classData);
+        require(exists(_tokenId), "Invalid TokenId.");
+        return assets[_tokenId].tokenURI;
     }
 
     function createNewAsset(AssetConfig memory _config) external {
@@ -116,9 +88,8 @@ contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
             _restore(_snapshot(_newState(_config.priceConfig))),
             _restore(_snapshot(_newState(_config.canMintConfig))),
             _config.currencies,
-            _config.assetClass,
-            _config.rarity,
-            _config.creator
+            _config.recepient,
+            _config.tokenURI
         );
 
         emit AssetCreated(
@@ -163,13 +134,13 @@ contract GameAssets is ERC1155SupplyUpgradeable, RainVM, VMState {
             if (stack_[0] == 0) {
                 ITransfer(assets[_assetId].currencies[i]).transferFrom(
                     msg.sender,
-                    assets[_assetId].creator,
+                    assets[_assetId].recepient,
                     stack_[1]
                 );
             } else if (stack_[0] == 1) {
                 ITransfer(assets[_assetId].currencies[i]).safeTransferFrom(
                     msg.sender,
-                    assets[_assetId].creator,
+                    assets[_assetId].recepient,
                     stack_[1],
                     stack_[2],
                     ""

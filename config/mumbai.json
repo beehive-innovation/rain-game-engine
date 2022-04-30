@@ -1,5 +1,5 @@
 {
   "network": "mumbai",
-  "gameAssetsFactory": "0xc782cF76e5827B3c2563a06EbA7B400deEe119a7",
-  "gameAssetsFactoryBlock": 26104657
+  "gameAssets": "0xc782cF76e5827B3c2563a06EbA7B400deEe119a7",
+  "gameAssetsBlock": 26104657
 }

@@ -3,24 +3,24 @@ const { artifacts ,ethers, } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
-import type { GameAssets, GameAssetsConfigStruct, AssetConfigStruct } from "../typechain/GameAssets"
-import type { Token } from "../typechain/Token"
-import type { ReserveToken } from "../typechain/ReserveToken"
-import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155"
-import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory"
-import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier"
+import type { GameAssets, AssetConfigStruct } from "../typechain/GameAssets";
+import type { Token } from "../typechain/Token";
+import type { ReserveToken } from "../typechain/ReserveToken";
+import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155";
+import type { ReserveTokenERC721 } from "../typechain/ReserveTokenERC721";
+import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 
-import { eighteenZeros, op, Opcode, Rarity, concat, VMState, getEventArgs, gameAssetsDeploy, fetchFile, writeFile, exec, Type, Role } from "./utils"
-import { BigNumber, Contract } from "ethers";
+import { eighteenZeros, getEventArgs, fetchFile, writeFile, Type, Conditions, exec } from "./utils"
+import { Contract } from "ethers";
 import path from "path";
-import { GameAssetsFactory__factory } from "../typechain/factories/GameAssetsFactory__factory";
-import { price, toScript } from "./VMScript";
+import { price, generatePriceScript, condition, generateCanMintScript } from "./VMScript";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
 ); // [1,2,3,4,5,6,7,8]
 
-export let gameAsstes: GameAssets
+export let gameAssets: GameAssets
 
 export let USDT: ReserveToken
 
@@ -29,8 +29,11 @@ export let SOL: Token
 export let XRP: Token
 export let rTKN: Token
 
+export let BAYC: ReserveTokenERC721
+
 export let CARS: ReserveTokenERC1155
 export let PLANES: ReserveTokenERC1155
+export let SHIPS: ReserveTokenERC1155
 
 export let erc20BalanceTier: ERC20BalanceTier
 
@@ -55,17 +58,12 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   gameAsstesOwner = signers[5];
   admin = signers[6];
 
-  const gameAssetsFactory = await new GameAssetsFactory__factory(owner).deploy()
-  await gameAssetsFactory.deployed();
 
-  const gameAssetsConfig: GameAssetsConfigStruct = {
-    _creator: gameAsstesOwner.address,
-    _baseURI: "www.baseURI.com/metadata"
-  }
+  let GameAssets = await ethers.getContractFactory("GameAssets")
+  
+  gameAssets = await GameAssets.deploy()
 
-  gameAsstes = await gameAssetsDeploy(gameAssetsFactory, gameAsstesOwner, gameAssetsConfig, {gasLimit : 1500000});
-
-  await gameAsstes.deployed();
+  await gameAssets.deployed();
 
   const Erc20 = await ethers.getContractFactory("Token");
   const stableCoins = await ethers.getContractFactory("ReserveToken");
@@ -81,10 +79,15 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   XRP = await Erc20.deploy("Ripple", "XRP");
   await XRP.deployed();
 
+  BAYC = await Erc721.deploy("Boared Ape Yatch Club", "BAYC");
+  await BAYC.deployed()
+
   CARS = await Erc1155.deploy();
-  await CARS.deployed()
+  await CARS.deployed();
   PLANES = await Erc1155.deploy();
-  await PLANES.deployed()
+  await PLANES.deployed();
+  SHIPS = await Erc1155.deploy();
+  await SHIPS.deployed();
 
   rTKN = await Erc20.deploy("Rain Token", "rTKN");
   await rTKN.deployed()
@@ -116,20 +119,19 @@ before("Deploy GameAssets Contract and subgraph", async function () {
 
   config.network = "localhost";
 
-  config.gameAssetsFactory = gameAssetsFactory.address;
-  config.gameAssetsFactoryBlock = gameAssetsFactory.deployTransaction.blockNumber;
+  config.gameAssets = gameAssets.address;
+  config.gameAssetsBlock = gameAssets.deployTransaction.blockNumber;
 
   console.log("Config : ", JSON.stringify(config, null, 2));
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  // exec(`npm run deploy:localhost`);
+  exec(`npm run deploy:localhost`);
 })
 
 describe("GameAssets Test", function () {
   it("Contract should be deployed.", async function () {
-    expect(gameAsstes.address).to.be.not.null;
-    expect(await gameAsstes.uri(1)).to.equals(`www.baseURI.com/metadata/${gameAsstes.address.toLowerCase()}/1.json`);
+    expect(gameAssets.address).to.be.not.null;
   });
 
   it("Should deploy all tokens", async function () {
@@ -142,42 +144,23 @@ describe("GameAssets Test", function () {
 
   it("Should create asset from creator.", async function () {
 
-    const expectedUSDTPrice = ethers.BigNumber.from("1" + eighteenZeros);
-    const expectedBNBPrice = ethers.BigNumber.from("25" + eighteenZeros);
-
-    const USDTConfig = [ Type.ERC20, expectedUSDTPrice]
-    const BNBConfig = [ Type.ERC20, expectedBNBPrice]
-    const CARSConfig = [ Type.ERC1155, 5, 10]
-    const PLANESCofig = [ Type.ERC1155, 15, 5]
-
-    const constants = [...USDTConfig, ...BNBConfig, ...CARSConfig, ...PLANESCofig];
-    let pos = -1;
-    const USDTSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    const BNBource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    const CARSSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-    const PLANESSource = concat([op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos), op(Opcode.VAL, ++pos)]);
-
-
-
-    const sources = [USDTSource, BNBource, CARSSource, PLANESSource];
-
-    let script: price[] = [
+    const prices: price[] = [
       {
-        currancy:{
+        currency:{
           type: Type.ERC20,
           address: USDT.address,
         },
-        amount: expectedUSDTPrice
+        amount: ethers.BigNumber.from("1" + eighteenZeros)
       },
       {
-        currancy:{
+        currency:{
           type: Type.ERC20,
           address: BNB.address,
         },
-        amount: expectedBNBPrice
+        amount: ethers.BigNumber.from("25" + eighteenZeros)
       },
       {
-        currancy:{
+        currency:{
           type: Type.ERC1155,
           address: CARS.address,
           tokenId: 5,
@@ -185,7 +168,7 @@ describe("GameAssets Test", function () {
         amount: ethers.BigNumber.from("10")
       },
       {
-        currancy:{
+        currency:{
           type: Type.ERC1155,
           address: PLANES.address,
           tokenId: 15,
@@ -194,79 +177,66 @@ describe("GameAssets Test", function () {
       },
     ] ;
 
-    let state = toScript(script, 3);
-
-    const priceConfig: VMState = {
-      sources,
-      constants,
-      stackLength: 3,
-      argumentsLength: 0,
-    };
-
+    const priceConfig = generatePriceScript(prices);
     const currencies = [USDT.address, BNB.address, CARS.address, PLANES.address]
-
-    const classCarName = "Car";
-    const classCarDescription = "A really good car.";
-    const classCarAttributes = [classCarName, classCarDescription, "Top speed", "Acceleration", "Break", "Handling", "Weight"]
-    await gameAsstes.createClass(classCarAttributes);
-
-    // expect(await gameAsstes.getClasses()).to.deep.include(ethers.BigNumber.from("1"))
+    // NOTE *** : courrencies sequence must be same ase sequence in prices.
 
     const tierCondition = 4
     const blockCondition = 15
 
-    const canMintConstants = [ erc20BalanceTier.address, tierCondition, blockCondition]
+    const conditions: condition[] = [
+      {
+        type: Conditions.BLOCK_NUMBER,
+        blockNumber: blockCondition
+      },
+      {
+        type: Conditions.BALANCE_TIER,
+        tierAddress: erc20BalanceTier.address,
+        tierCondition: tierCondition
+      },
+      {
+        type: Conditions.ERC20BALANCE,
+        address: SOL.address,
+        balance: ethers.BigNumber.from("10" + eighteenZeros)
+      },
+      {
+        type: Conditions.ERC721BALANCE,
+        address: BAYC.address,
+        balance: ethers.BigNumber.from("0")
+      },
+      {
+        type: Conditions.ERC1155BALANCE,
+        address: SHIPS.address,
+        id: ethers.BigNumber.from("1"),
+        balance: ethers.BigNumber.from("10")
+      }
+    ];
 
-    const canMintSource = concat([
-      op(Opcode.VAL, 0),
-      op(Opcode.SENDER),
-      op(Opcode.REPORT),
-      op(Opcode.BLOCK_NUMBER),
-      op(Opcode.REPORT_AT_BLOCK),
-      op(Opcode.VAL, 1),
-      op(Opcode.GREATER_THAN),
-      op(Opcode.BLOCK_NUMBER),
-      op(Opcode.VAL, 2),
-      op(Opcode.GREATER_THAN),
-      op(Opcode.EVERY, 2)
-    ])
-
-
-    const canMintConfig: VMState = {
-      sources: [
-        canMintSource
-      ],
-      constants: canMintConstants,
-      stackLength: 10,
-      argumentsLength: 0,
-    }
+    const canMintConfig = generateCanMintScript(conditions);
 
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,
-      priceConfig: state,
+      priceConfig: priceConfig,
       canMintConfig: canMintConfig,
       currencies: currencies,
-      assetClass: 1,
-      rarity: Rarity.NONE,
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
-      creator: creator.address
+      recepient: creator.address,
+      tokenURI: "URI",
     }
 
-    await gameAsstes.connect(gameAsstesOwner).createNewAsset(assetConfig);
+    await gameAssets.connect(gameAsstesOwner).createNewAsset(assetConfig);
 
-    let assetData = await gameAsstes.assets(1)
+    let assetData = await gameAssets.assets(1)
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
-      assetClass: assetData.assetClass,
-      rarity: assetData.rarity,
-      creator: assetData.creator,
+      tokenURI: assetData.tokenURI,
+      creator: assetData.recepient,
     }
 
     expect(expectAsset).to.deep.equals({
       lootBoxId: ethers.BigNumber.from("0"),
-      assetClass: ethers.BigNumber.from("1"),
-      rarity: ethers.BigNumber.from(Rarity.NONE),
+      tokenURI: "URI",
       creator: creator.address,
     })
   });
@@ -276,23 +246,28 @@ describe("GameAssets Test", function () {
 
     await USDT.connect(buyer1).mintTokens(1);
     await BNB.connect(buyer1).mintTokens(25);
+
+    await SOL.connect(buyer1).mintTokens(11);
+
+    await BAYC.connect(buyer1).mintNewToken();
     
     await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
+    await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
 
-    let USDTPrice = (await gameAsstes.getAssetPrice(1, USDT.address, 1))[1]
-    let BNBPrice = (await gameAsstes.getAssetPrice(1, BNB.address, 1))[1]
+    let USDTPrice = (await gameAssets.getAssetPrice(1, USDT.address, 1))[1]
+    let BNBPrice = (await gameAssets.getAssetPrice(1, BNB.address, 1))[1]
 
-    await USDT.connect(buyer1).approve(gameAsstes.address, USDTPrice);
-    await BNB.connect(buyer1).approve(gameAsstes.address, BNBPrice);
+    await USDT.connect(buyer1).approve(gameAssets.address, USDTPrice);
+    await BNB.connect(buyer1).approve(gameAssets.address, BNBPrice);
     
-    await CARS.connect(buyer1).setApprovalForAll(gameAsstes.address, true);
-    await PLANES.connect(buyer1).setApprovalForAll(gameAsstes.address, true);
+    await CARS.connect(buyer1).setApprovalForAll(gameAssets.address, true);
+    await PLANES.connect(buyer1).setApprovalForAll(gameAssets.address, true);
     
-    await gameAsstes.connect(buyer1).mintAssets(1,1);
+    await gameAssets.connect(buyer1).mintAssets(1,1);
+    expect(await gameAssets.uri(1)).to.equals(`URI`);
 
-    expect(await gameAsstes.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
-    // expect(await gameAsstes.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("2"))
+    expect(await gameAssets.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
 
     expect(await USDT.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
     expect(await BNB.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))

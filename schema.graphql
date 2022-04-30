@@ -1,29 +1,8 @@
-type GameAssetsFactory @entity {
-  "GameAssetsFactory address"
-  id: ID!#{GameAssetsFactory.address}
-  "First contract deployed by"
-  implementation: Bytes!
-  "List of GameAsset deployed by factory"
-  children: [GameAsset!]  #GameAssets deployed by factory
-}
-
 type GameAsset @entity {
   "GameAssets address"
   id: ID!#{GameAsset.address}
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
-  "Address of Owner of contract"
-  owner: Bytes! # Get it from _config from Initialize event for first time.
-  # After get it from TransferOwnership event.
-  "Address of admin"
-  admin: Bytes!   # Get it from AdminChanged event
-  "Base URI of assets"
-  baseURI: String! # Get it from BaseURIChanged event
-  "List Creators of Assets"
-  creators: [Creator!] # Add Creator.id from CreatorAdded event
-  # Remove Creator.id from CreatorRemoved event
-  "List of AssetClass"
-  classes: [AssetClass!] # Add AssetClass.id from ClassCreated event
   "List of Assets"
   assets: [Asset!] # Add Asset.id from AssetCreated event
   "List of Holders of Assets"
@@ -32,8 +11,6 @@ type GameAsset @entity {
   deployBlock: BigInt! # event.block.number
   "Timestamp at which GameAssets contract deployed"
   deployTimestamp: BigInt! # event.block.timestamp
-  "Total numbers of Classes"
-  classCount: BigInt!
 }
 
 type Asset @entity {
@@ -46,7 +23,7 @@ type Asset @entity {
   "Id of asset"
   assetId: BigInt! # event.params._asset._assetId
   "Creator of this asset"
-  creator: Bytes! # event.params._asset.creator
+  recepient: Bytes! # event.params._asset.creator
   "Id of LootBox that contains this asset"
   lootBoxID: BigInt! # event.params._asset.lootBoxId
   "Script for price"
@@ -55,26 +32,10 @@ type Asset @entity {
   canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
   "List of ERC20 and ERC1155 tokens used for payment"
   currencies: [String!]! # event.params._asset.currencies
-  "Class of this Asset"
-  assetClass: AssetClass! # event.params._asset.assetClass
-  "Rarity of this asset"
-  rarity: BigInt! # event.params._asset.rarity
   "Block number at which GameAssets contract deployed"
   creationBlock: BigInt! # event.block.number
   "Timestamp at which GameAssets contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
-}
-
-# create from ClassCreated event
-type AssetClass @entity{
-  "Id for asset"
-  id: ID! #{GameAsset.address}-{event.params._classId}
-  "Name of asset"
-  name: String! # event.params._name
-  "Description of asset"
-  descciption: String! # event.params._description
-  "List of attributes"
-  attributes: [String!]! # event.params._attributes
 }
 
 # create from AssetCreated event
@@ -103,16 +64,6 @@ type CanMintConfig @entity {
   stackLength: BigInt!
   # event.params._asset._priceConfig.argumentsLength
   argumentsLength: BigInt!
-}
-
-# Create from CreatorAdded event
-type Creator @entity{
-  id: ID! #{GameAsset.address}-{event.params._addedCreator}
-  "Address of creator"
-  address: Bytes! # event.params._addedCreator
-  "Assets created by this Creator"
-  assetesCreated: [Asset!] # add Asset created by this creator.
-  # From AssetCreated event
 }
 
 # Create on every TransferSingle or TransferBatch event

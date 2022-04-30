@@ -12,7 +12,9 @@ contract ReserveTokenERC721 is ERC721, ERC721Burnable {
     uint256 public tokenCount;
 
     /// Define and mint a erc721 token.
-    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {
+    constructor(string memory _name, string memory _symbol)
+        ERC721(_name, _symbol)
+    {
         tokenCount = 0;
         _mint(msg.sender, tokenCount);
     }

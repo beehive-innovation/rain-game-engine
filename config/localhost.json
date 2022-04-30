@@ -1,5 +1,5 @@
 {
   "network": "localhost",
-  "gameAssetsFactory": "0x2b5A4e5493d4a54E717057B127cf0C000C876f9B",
-  "gameAssetsFactoryBlock": 345
+  "gameAssets": "0x9849832a1d8274aaeDb1112ad9686413461e7101",
+  "gameAssetsBlock": 646
 }

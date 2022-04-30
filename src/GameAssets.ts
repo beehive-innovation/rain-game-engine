@@ -1,54 +1,31 @@
 import {
-    ClassCreated,
     Initialize,
     AssetCreated,
     Snapshot,
     TransferBatch,
     TransferSingle,
     URI
-} from "../generated/templates/GameAssetsTemplate/GameAssets";
+} from "../generated/GameAssets/GameAssets";
 
 import { 
     GameAsset,
     Asset,
-    AssetClass,
     PriceConfig, 
     CanMintConfig,
-    Creator,
     Holder,
     AssetsOwned
 } from "../generated/schema"
-import { store, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
-export function handleClassCreated(event: ClassCreated): void {
-    let gameAsset = GameAsset.load(event.address.toHex());
-    
-    if(gameAsset){
-        gameAsset.classCount = gameAsset.classCount.plus(ONE_BI);
-        let classCount = gameAsset.classCount;
-        let assetClass = new AssetClass(event.address.toHex() + "-" + classCount.toString());
-        let params = event.params._classData
-        let attributes = params.slice(2,params.length)
-        assetClass.name = event.params._classData[0];
-        assetClass.descciption = event.params._classData[1];
-        assetClass.attributes = attributes;
-        assetClass.save()
-
-        let classes = gameAsset.classes;
-        if(classes) classes.push(assetClass.id);
-        gameAsset.classes = classes;
-        gameAsset.save()
-    }
-}
-
 export function handleInitialize(event: Initialize): void {
-    let gameAsset = GameAsset.load(event.address.toHex())
-    if(gameAsset){
-        gameAsset.baseURI = event.params.config._baseURI;
-        gameAsset.owner = event.params.config._creator;
-        gameAsset.save();
-    }
+    let gameAsset = new GameAsset(event.address.toHex())
+    gameAsset.deployBlock = event.block.number;
+    gameAsset.deployTimestamp = event.block.timestamp;
+    gameAsset.totalAssets = ZERO_BI;
+    gameAsset.assets = [];
+    gameAsset.holders = [];
+    gameAsset.save();
 }
 
 export function handleAssetCreated(event: AssetCreated): void {
@@ -57,9 +34,7 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.descciption = event.params._description;
     asset.assetId = event.params._assetId;
     asset.lootBoxID = event.params._asset.lootBoxId;
-    asset.assetClass = getClass(event.address.toHex(), event.params._asset.assetClass);
-    asset.creator = event.params._asset.creator;
-    asset.rarity = event.params._asset.rarity;
+    asset.recepient = event.params._asset.recepient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
 
@@ -101,16 +76,6 @@ export function handleAssetCreated(event: AssetCreated): void {
 
         gameAsset.save();
     }
-
-    let creator = Creator.load(event.address.toHex() + "-" + event.params._asset.creator.toHex());
-    if(creator){
-        let assetCreated = creator.assetesCreated;
-        if(assetCreated) assetCreated.push(asset.id);
-        creator.assetesCreated = assetCreated;
-
-        creator.save();
-    }
-
 }
 
 export function handleSnapshot(event: Snapshot): void {
@@ -221,14 +186,4 @@ export function handleTransferSingle(event: TransferSingle): void {
 }
 export function handleURI(event: URI): void {
 
-}
-
-function getClass(gameAsset: string ,_classId: BigInt): string {
-    let assetClass = AssetClass.load(gameAsset + "-" + _classId.toString());
-    if(assetClass){
-        return assetClass.id;
-    }else{
-        log.info("Invalid classId for Asset {}", [_classId.toString()])
-    }
-    return "";
 }
