@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig } from "hardhat/config";
+import "@nomiclabs/hardhat-etherscan";
 import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-waffle";
@@ -78,6 +79,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 600000,
+  },
+  etherscan: {
+    apiKey: `https://rpc-mumbai.matic.today`
   }
 };
 

@@ -1,5 +1,6 @@
 import hre, { ethers } from "hardhat";
 import * as path from "path";
+import { exec } from "../test/utils";
 import { saveGameAssetsFactory } from "./utils";
 
 async function main() {
@@ -13,6 +14,9 @@ async function main() {
   saveGameAssetsFactory(gameAssetsFactory);
 
   console.log("GameAssetsFactory deployed ");
+
+  exec(`npm run deploy:mumbai`);
+
 }
 
 main()

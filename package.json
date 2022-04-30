@@ -35,6 +35,7 @@
   "homepage": "https://github.com/beehive-innovation/rain-game-engine#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@typechain/ethers-v5": "^8.0.5",
     "@typechain/hardhat": "^3.0.0",
     "@types/mocha": "^8.2.0",

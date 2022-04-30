@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: GameAssets
-    network: localhost
+    network: mumbai
     source:
-      address: "0x9849832a1d8274aaeDb1112ad9686413461e7101"
+      address: "0xAb5e27E3CEb437A71365216D21ceF14E732cf3fB"
       abi: GameAssets
-      startBlock: 646
+      startBlock: 26146526
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
