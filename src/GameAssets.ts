@@ -15,7 +15,6 @@ import {
     Holder,
     AssetsOwned
 } from "../generated/schema"
-import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
 export function handleInitialize(event: Initialize): void {
@@ -37,6 +36,7 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.recepient = event.params._asset.recepient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
+    asset.tokenURI = event.params._asset.tokenURI;
 
     let _currencies = event.params._asset.currencies;
     let currencies = asset.currencies;

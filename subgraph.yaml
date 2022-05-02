@@ -6,9 +6,9 @@ dataSources:
     name: GameAssets
     network: mumbai
     source:
-      address: "0xAb5e27E3CEb437A71365216D21ceF14E732cf3fB"
+      address: "0x3bCF3423380E21d0e724165bc8Bd8499636586ED"
       abi: GameAssets
-      startBlock: 26146526
+      startBlock: 26167911
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

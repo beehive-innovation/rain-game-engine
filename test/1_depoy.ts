@@ -126,7 +126,11 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  exec(`npm run deploy:localhost`);
+  try {
+    exec(`npm run deploy:localhost`);
+  }catch(error){
+    console.log(`Subgraph deployment failed : ${error}`);
+  }
 })
 
 describe("GameAssets Test", function () {

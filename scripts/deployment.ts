@@ -1,4 +1,3 @@
-import { exec } from "child_process";
 import hre, { ethers } from "hardhat";
 import path from "path";
 import { fetchFile, writeFile} from "../test/utils";
@@ -27,14 +26,14 @@ async function main() {
     writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
 
-    // await sleep(30);
+    await sleep(30);
 
-    // console.log("Verifying smartcontract")
-    // await hre.run("verify:verify", {
-    //   address: gameAssets.address,
-    //   contract: "contracts/GameAssets.sol:GameAssets",
-    //   constructorArguments: [],
-    // });
+    console.log("Verifying smartcontract")
+    await hre.run("verify:verify", {
+      address: gameAssets.address,
+      contract: "contracts/GameAssets.sol:GameAssets",
+      constructorArguments: [],
+    });
   }
   
   main()

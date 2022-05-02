@@ -36,6 +36,8 @@ type Asset @entity {
   creationBlock: BigInt! # event.block.number
   "Timestamp at which GameAssets contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
+  "TokenURI of Asset"
+  tokenURI: String! # event.params._asset.tokenURI
 }
 
 # create from AssetCreated event

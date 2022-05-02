@@ -1,7 +1,7 @@
 {
   "name": "rain-game-engine",
   "version": "0.0.1",
-  "description": "Game engine for decentralise games.",
+  "description": "Game engine for decentralized games.",
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
