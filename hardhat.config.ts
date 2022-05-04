@@ -81,7 +81,7 @@ const config: HardhatUserConfig = {
     timeout: 600000,
   },
   etherscan: {
-    apiKey: `https://rpc-mumbai.matic.today`
+    apiKey: process.env.POLYGONSCAN_API_KEY
   }
 };
 

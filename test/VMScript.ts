@@ -49,6 +49,36 @@ export function generatePriceScript(prices: price[]): VMState {
     return state;
 }
 
+export function generatePriceConfig(
+    priceScritp: VMState,
+    currencies: string[]
+  ): price[]{
+    let prices: price[] = [];
+    for (let i = 0; i < priceScritp.sources.length; i++) {
+      let source = priceScritp.sources[i];
+      if(source.length == 4){
+          prices.push({
+              currency:{
+                  type: priceScritp.constants[source[1]],
+                  address: currencies[i],
+              },
+              amount: priceScritp.constants[source[3]]
+          })
+
+      }else if(source.length == 6){
+        prices.push({
+            currency:{
+                type: priceScritp.constants[source[1]],
+                address: currencies[i],
+                tokenId: priceScritp.constants[source[3]]
+            },
+            amount: priceScritp.constants[source[5]]
+        })
+      }
+    }
+    return prices;
+  };
+
 export function generateCanMintScript(conditions: condition[]): VMState {
     let pos = -1;
     let sources: Uint8Array[] = []
@@ -58,7 +88,10 @@ export function generateCanMintScript(conditions: condition[]): VMState {
 
     for(i=0;i<conditions.length;i++){
         let condition = conditions[i];
-        if(condition.type == Conditions.BLOCK_NUMBER){
+        if(condition.type == Conditions.NONE){
+            constants.push(1);
+            sources.push(op(Opcode.VAL, ++pos));
+        } else if(condition.type == Conditions.BLOCK_NUMBER){
             constants.push(condition.blockNumber);
             sources.push(op(Opcode.BLOCK_NUMBER));
             sources.push(op(Opcode.VAL, ++pos));
@@ -67,7 +100,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.tierAddress);
             constants.push(condition.tierCondition);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.SENDER));
+            sources.push(op(Opcode.ACCOUT));
             sources.push(op(Opcode.REPORT));
             sources.push(op(Opcode.BLOCK_NUMBER));
             sources.push(op(Opcode.REPORT_AT_BLOCK));
@@ -77,7 +110,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.address);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.SENDER));
+            sources.push(op(Opcode.ACCOUT));
             sources.push(op(Opcode.IERC20_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.GREATER_THAN));
@@ -85,7 +118,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.address);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.SENDER));
+            sources.push(op(Opcode.ACCOUT));
             sources.push(op(Opcode.IERC721_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.GREATER_THAN));
@@ -94,7 +127,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.id);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.SENDER));
+            sources.push(op(Opcode.ACCOUT));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.IERC1155_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));

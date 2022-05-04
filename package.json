@@ -12,6 +12,7 @@
     "build-graph": "graph build",
     "hardhat-node": "hardhat node",
     "copy-abis": "cp artifacts/contracts/GameAssets.sol/GameAssets.json abis/",
+    "deploy:rain": "graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-game-engine-mumbai-v1",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",

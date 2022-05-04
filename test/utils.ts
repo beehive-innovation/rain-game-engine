@@ -22,6 +22,7 @@ export enum Type {
 }
 
 export enum Conditions {
+  NONE,
   BLOCK_NUMBER,
   BALANCE_TIER,
   ERC20BALANCE,
@@ -93,7 +94,8 @@ export enum AllStandardOps {
 }
 
 enum GameAssetsOpcode {
-  REPORT_AT_BLOCK = 0 + AllStandardOps.length
+  REPORT_AT_BLOCK = 0 + AllStandardOps.length,
+  ACCOUT
 }
 export const Opcode = {
   ...AllStandardOps,

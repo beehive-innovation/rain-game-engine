@@ -14,7 +14,7 @@ import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 import { eighteenZeros, getEventArgs, fetchFile, writeFile, Type, Conditions, exec } from "./utils"
 import { Contract } from "ethers";
 import path from "path";
-import { price, generatePriceScript, condition, generateCanMintScript } from "./VMScript";
+import { price, generatePriceScript, condition, generateCanMintScript, generatePriceConfig } from "./VMScript";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
@@ -183,12 +183,15 @@ describe("GameAssets Test", function () {
 
     const priceConfig = generatePriceScript(prices);
     const currencies = [USDT.address, BNB.address, CARS.address, PLANES.address]
-    // NOTE *** : courrencies sequence must be same ase sequence in prices.
+    const priceScript = generatePriceConfig(priceConfig, currencies);
 
     const tierCondition = 4
     const blockCondition = 15
 
     const conditions: condition[] = [
+      {
+        type: Conditions.NONE
+      },
       {
         type: Conditions.BLOCK_NUMBER,
         blockNumber: blockCondition

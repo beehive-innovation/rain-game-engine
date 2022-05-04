@@ -22,9 +22,11 @@ struct AssetConfig {
 contract GameAssets is ERC1155Supply, RainVM, VMState {
     using Strings for uint256;
 
-    uint256 internal constant LOCAL_OP_TIER_REPORT_AT_BLOCK = 0;
+    uint256 internal constant TIER_REPORT_AT_BLOCK = 0;
 
-    uint256 internal constant LOCAL_OPS_LENGTH = 1;
+    uint256 internal constant ACCOUNT = 1;
+
+    uint256 internal constant LOCAL_OPS_LENGTH = 2;
 
     uint256 private immutable localOpsStart =
         ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
@@ -61,11 +63,15 @@ contract GameAssets is ERC1155Supply, RainVM, VMState {
         emit Initialize(msg.sender);
     }
 
-    function canMint(uint256 _assetId) public {
+    function canMint(uint256 _assetId, address _account)
+        public
+        view
+        returns (bool)
+    {
         State memory state_ = assets[_assetId].canMintConfig;
-        eval("", state_, 0);
+        eval(abi.encode(_account), state_, 0);
 
-        require(state_.stack[state_.stackIndex - 1] == 1, "Can not mint.");
+        return (state_.stack[state_.stackIndex - 1] == 1);
     }
 
     function uri(uint256 _tokenId)
@@ -123,7 +129,7 @@ contract GameAssets is ERC1155Supply, RainVM, VMState {
 
     function mintAssets(uint256 _assetId, uint256 _units) external {
         require(_assetId <= totalAssets, "Invalid AssetId");
-        canMint(_assetId);
+        require(canMint(_assetId, msg.sender), "Cant Mint");
         for (uint256 i = 0; i < assets[_assetId].currencies.length; i = i + 1) {
             uint256[] memory stack_ = getAssetPrice(
                 _assetId,
@@ -167,12 +173,20 @@ contract GameAssets is ERC1155Supply, RainVM, VMState {
                 opcode_ -= localOpsStart;
                 require(opcode_ < LOCAL_OPS_LENGTH, "MAX_OPCODE");
                 // There's only one opcode, which stacks the address to report.
-                state_.stack[state_.stackIndex - 2] = TierReport
-                    .tierAtBlockFromReport(
-                        state_.stack[state_.stackIndex - 2],
-                        state_.stack[state_.stackIndex - 1]
+                if (opcode_ == TIER_REPORT_AT_BLOCK) {
+                    state_.stack[state_.stackIndex - 2] = TierReport
+                        .tierAtBlockFromReport(
+                            state_.stack[state_.stackIndex - 2],
+                            state_.stack[state_.stackIndex - 1]
+                        );
+                    state_.stackIndex--;
+                } else if (opcode_ == ACCOUNT) {
+                    address account_ = abi.decode(context_, (address));
+                    state_.stack[state_.stackIndex] = uint256(
+                        uint160(account_)
                     );
-                state_.stackIndex--;
+                    state_.stackIndex++;
+                }
             }
         }
     }
