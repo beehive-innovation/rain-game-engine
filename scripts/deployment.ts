@@ -9,18 +9,18 @@ async function main() {
     const blockNumber = (await ethers.provider.getBlock("latest")).number;
 
     console.log("Deploying smartcontract")
-    const GameAssets = await ethers.getContractFactory("GameAssets");
-    const gameAssets = await GameAssets.deploy();
-    await gameAssets.deployed()
-    console.log("contract deployed : ", gameAssets.address)
+    const Rain1155 = await ethers.getContractFactory("Rain1155");
+    const rain1155 = await Rain1155.deploy();
+    await rain1155.deployed()
+    console.log("contract deployed : ", rain1155.address)
 
     const pathExampleConfig = path.resolve(__dirname, "../config/mumbai.json");
     const config = JSON.parse(fetchFile(pathExampleConfig));
 
     config.network = "mumbai";
 
-    config.gameAssets = gameAssets.address;
-    config.gameAssetsBlock = blockNumber;
+    config.rain1155 = rain1155.address;
+    config.rain1155Block = blockNumber;
 
     const pathConfigLocal = path.resolve(__dirname, "../config/mumbai.json");
     writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
@@ -30,8 +30,8 @@ async function main() {
 
     console.log("Verifying smartcontract")
     await hre.run("verify:verify", {
-      address: gameAssets.address,
-      contract: "contracts/GameAssets.sol:GameAssets",
+      address: rain1155.address,
+      contract: "contracts/Rain1155.sol:Rain1155",
       constructorArguments: [],
     });
   }

@@ -5,10 +5,10 @@ import {
     TransferBatch,
     TransferSingle,
     URI
-} from "../generated/GameAssets/GameAssets";
+} from "../generated/Rain1155/Rain1155";
 
 import { 
-    GameAsset,
+    Rain1155,
     Asset,
     PriceConfig, 
     CanMintConfig,
@@ -18,13 +18,13 @@ import {
 import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
 export function handleInitialize(event: Initialize): void {
-    let gameAsset = new GameAsset(event.address.toHex())
-    gameAsset.deployBlock = event.block.number;
-    gameAsset.deployTimestamp = event.block.timestamp;
-    gameAsset.totalAssets = ZERO_BI;
-    gameAsset.assets = [];
-    gameAsset.holders = [];
-    gameAsset.save();
+    let rain1155 = new Rain1155(event.address.toHex())
+    rain1155.deployBlock = event.block.number;
+    rain1155.deployTimestamp = event.block.timestamp;
+    rain1155.totalAssets = ZERO_BI;
+    rain1155.assets = [];
+    rain1155.holders = [];
+    rain1155.save();
 }
 
 export function handleAssetCreated(event: AssetCreated): void {
@@ -66,15 +66,15 @@ export function handleAssetCreated(event: AssetCreated): void {
 
     asset.save()
 
-    let gameAsset = GameAsset.load(event.address.toHex());
-    if(gameAsset){
-        let assets = gameAsset.assets;
+    let rain1155 = Rain1155.load(event.address.toHex());
+    if(rain1155){
+        let assets = rain1155.assets;
         if(assets) assets.push(asset.id);
-        gameAsset.assets = assets;
+        rain1155.assets = assets;
 
-        gameAsset.totalAssets = gameAsset.totalAssets.plus(ONE_BI);
+        rain1155.totalAssets = rain1155.totalAssets.plus(ONE_BI);
 
-        gameAsset.save();
+        rain1155.save();
     }
 }
 
@@ -124,14 +124,14 @@ export function handleTransferBatch(event: TransferBatch): void {
             }
         }
 
-        let gameAsset = GameAsset.load(event.address.toHex());
-        if(gameAsset){
-            let holders = gameAsset.holders;
+        let rain1155 = Rain1155.load(event.address.toHex());
+        if(rain1155){
+            let holders = rain1155.holders;
             if(holders && !holders.includes(receiver.id)){
                 holders.push(receiver.id)
             }
-            gameAsset.holders = holders;
-            gameAsset.save();
+            rain1155.holders = holders;
+            rain1155.save();
         }
     }
 
@@ -174,14 +174,14 @@ export function handleTransferSingle(event: TransferSingle): void {
         }
     }
 
-    let gameAsset = GameAsset.load(event.address.toHex());
-    if(gameAsset){
-        let holders = gameAsset.holders;
+    let rain1155 = Rain1155.load(event.address.toHex());
+    if(rain1155){
+        let holders = rain1155.holders;
         if(holders && !holders.includes(receiver.id)){
             holders.push(receiver.id)
         }
-        gameAsset.holders = holders;
-        gameAsset.save();
+        rain1155.holders = holders;
+        rain1155.save();
     }
 }
 export function handleURI(event: URI): void {

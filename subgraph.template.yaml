@@ -3,12 +3,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: GameAssets
+    name: Rain1155
     network: {{ network }}
     source:
-      address: "{{ gameAssets }}"
-      abi: GameAssets
-      startBlock: {{ gameAssetsBlock }}
+      address: "{{ rain1155 }}"
+      abi: Rain1155
+      startBlock: {{ rain1155Block }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -17,8 +17,8 @@ dataSources:
         - Implementation
         - NewChild
       abis:
-        - name: GameAssets
-          file: ./abis/GameAssets.json
+        - name: Rain1155
+          file: ./abis/Rain1155.json
       eventHandlers:
         - event: ClassCreated(string[])
           handler: handleClassCreated
@@ -34,4 +34,4 @@ dataSources:
           handler: handleTransferSingle
         - event: URI(string,indexed uint256)
           handler: handleURI
-      file: ./src/GameAssets.ts
+      file: ./src/Rain1155.ts

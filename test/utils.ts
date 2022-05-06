@@ -1,6 +1,6 @@
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
-import { StateConfigStruct } from "../typechain/GameAssets"
+import { StateConfigStruct } from "../typechain/Rain1155"
 import { Factory, NewChildEvent } from "../typechain/Factory"
 import { ContractTransaction, Contract, BigNumber, Overrides } from "ethers";
 import { Result } from "ethers/lib/utils";
@@ -95,7 +95,7 @@ export enum AllStandardOps {
 
 enum GameAssetsOpcode {
   REPORT_AT_BLOCK = 0 + AllStandardOps.length,
-  ACCOUT
+  ACCOUNT
 }
 export const Opcode = {
   ...AllStandardOps,

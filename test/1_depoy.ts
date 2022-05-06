@@ -3,7 +3,7 @@ const { artifacts ,ethers, } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
-import type { GameAssets, AssetConfigStruct } from "../typechain/GameAssets";
+import type { Rain1155, AssetConfigStruct } from "../typechain/Rain1155";
 import type { Token } from "../typechain/Token";
 import type { ReserveToken } from "../typechain/ReserveToken";
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155";
@@ -20,7 +20,7 @@ const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
 ); // [1,2,3,4,5,6,7,8]
 
-export let gameAssets: GameAssets
+export let rain1155: Rain1155
 
 export let USDT: ReserveToken
 
@@ -47,7 +47,7 @@ export let owner: SignerWithAddress,
 
 const subgraphName = "vishalkale151071/blocks";
 
-before("Deploy GameAssets Contract and subgraph", async function () {
+before("Deploy Rain1155 Contract and subgraph", async function () {
   const signers = await ethers.getSigners();
 
   owner = signers[0];
@@ -59,11 +59,11 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   admin = signers[6];
 
 
-  let GameAssets = await ethers.getContractFactory("GameAssets")
+  let Rain1155 = await ethers.getContractFactory("Rain1155")
   
-  gameAssets = await GameAssets.deploy()
+  rain1155 = await Rain1155.deploy()
 
-  await gameAssets.deployed();
+  await rain1155.deployed();
 
   const Erc20 = await ethers.getContractFactory("Token");
   const stableCoins = await ethers.getContractFactory("ReserveToken");
@@ -119,8 +119,8 @@ before("Deploy GameAssets Contract and subgraph", async function () {
 
   config.network = "localhost";
 
-  config.gameAssets = gameAssets.address;
-  config.gameAssetsBlock = gameAssets.deployTransaction.blockNumber;
+  config.rain1155 = rain1155.address;
+  config.rain1155Block = rain1155.deployTransaction.blockNumber;
 
   console.log("Config : ", JSON.stringify(config, null, 2));
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
@@ -133,9 +133,9 @@ before("Deploy GameAssets Contract and subgraph", async function () {
   }
 })
 
-describe("GameAssets Test", function () {
+describe("Rain1155 Test", function () {
   it("Contract should be deployed.", async function () {
-    expect(gameAssets.address).to.be.not.null;
+    expect(rain1155.address).to.be.not.null;
   });
 
   it("Should deploy all tokens", async function () {
@@ -181,7 +181,7 @@ describe("GameAssets Test", function () {
       },
     ] ;
 
-    const priceConfig = generatePriceScript(prices);
+    const priceConfig = generatePriceScript([]);
     const currencies = [USDT.address, BNB.address, CARS.address, PLANES.address]
     const priceScript = generatePriceConfig(priceConfig, currencies);
 
@@ -225,16 +225,16 @@ describe("GameAssets Test", function () {
       lootBoxId: 0,
       priceConfig: priceConfig,
       canMintConfig: canMintConfig,
-      currencies: currencies,
+      currencies: [],
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
       recepient: creator.address,
       tokenURI: "URI",
     }
 
-    await gameAssets.connect(gameAsstesOwner).createNewAsset(assetConfig);
+    await rain1155.connect(gameAsstesOwner).createNewAsset(assetConfig);
 
-    let assetData = await gameAssets.assets(1)
+    let assetData = await rain1155.assets(1)
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
       tokenURI: assetData.tokenURI,
@@ -262,19 +262,19 @@ describe("GameAssets Test", function () {
     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
     await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
 
-    let USDTPrice = (await gameAssets.getAssetPrice(1, USDT.address, 1))[1]
-    let BNBPrice = (await gameAssets.getAssetPrice(1, BNB.address, 1))[1]
+    // let USDTPrice = (await rain1155.getAssetPrice(1, USDT.address, 1))[1]
+    // let BNBPrice = (await rain1155.getAssetPrice(1, BNB.address, 1))[1]
 
-    await USDT.connect(buyer1).approve(gameAssets.address, USDTPrice);
-    await BNB.connect(buyer1).approve(gameAssets.address, BNBPrice);
+    // await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
+    // await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);
     
-    await CARS.connect(buyer1).setApprovalForAll(gameAssets.address, true);
-    await PLANES.connect(buyer1).setApprovalForAll(gameAssets.address, true);
+    // await CARS.connect(buyer1).setApprovalForAll(rain1155.address, true);
+    // await PLANES.connect(buyer1).setApprovalForAll(rain1155.address, true);
     
-    await gameAssets.connect(buyer1).mintAssets(1,1);
-    expect(await gameAssets.uri(1)).to.equals(`URI`);
+    await rain1155.connect(buyer1).mintAssets(1,1);
+    // expect(await rain1155.uri(1)).to.equals(`URI`);
 
-    expect(await gameAssets.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+    expect(await rain1155.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
 
     expect(await USDT.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
     expect(await BNB.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))

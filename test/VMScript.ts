@@ -40,6 +40,16 @@ export function generatePriceScript(prices: price[]): VMState {
             constants.push(obj.amount);
         }
     }
+
+    if(prices.length == 0){
+        let state: VMState = {
+            sources: [concat([op(Opcode.SKIP)])],
+            constants: [],
+            stackLength: 0,
+            argumentsLength: 0
+        };
+        return state;
+    }
     let state: VMState = {
         sources: sources,
         constants: constants,
@@ -100,7 +110,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.tierAddress);
             constants.push(condition.tierCondition);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.ACCOUT));
+            sources.push(op(Opcode.ACCOUNT));
             sources.push(op(Opcode.REPORT));
             sources.push(op(Opcode.BLOCK_NUMBER));
             sources.push(op(Opcode.REPORT_AT_BLOCK));
@@ -110,7 +120,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.address);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.ACCOUT));
+            sources.push(op(Opcode.ACCOUNT));
             sources.push(op(Opcode.IERC20_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.GREATER_THAN));
@@ -118,7 +128,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.address);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.ACCOUT));
+            sources.push(op(Opcode.ACCOUNT));
             sources.push(op(Opcode.IERC721_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.GREATER_THAN));
@@ -127,7 +137,7 @@ export function generateCanMintScript(conditions: condition[]): VMState {
             constants.push(condition.id);
             constants.push(condition.balance);
             sources.push(op(Opcode.VAL, ++pos));
-            sources.push(op(Opcode.ACCOUT));
+            sources.push(op(Opcode.ACCOUNT));
             sources.push(op(Opcode.VAL, ++pos));
             sources.push(op(Opcode.IERC1155_BALANCE_OF));
             sources.push(op(Opcode.VAL, ++pos));

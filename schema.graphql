@@ -1,21 +1,21 @@
-type GameAsset @entity {
-  "GameAssets address"
-  id: ID!#{GameAsset.address}
+type Rain1155 @entity {
+  "Rain1155 address"
+  id: ID!#{Rain1155.address}
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
   "List of Assets"
   assets: [Asset!] # Add Asset.id from AssetCreated event
   "List of Holders of Assets"
   holders: [Holder!]   # Add new Holder from TransferSingle or TransferBatch event
-  "Block number at which GameAssets contract deployed"
+  "Block number at which Rain1155 contract deployed"
   deployBlock: BigInt! # event.block.number
-  "Timestamp at which GameAssets contract deployed"
+  "Timestamp at which Rain1155 contract deployed"
   deployTimestamp: BigInt! # event.block.timestamp
 }
 
 type Asset @entity {
-  #{GameAsset.address}-{event.params._asset._assetId} 
-  id: ID! #{GameAsset.address}-{event.params._asset._assetId} 
+  #{Rain1155.address}-{event.params._asset._assetId} 
+  id: ID! #{Rain1155.address}-{event.params._asset._assetId} 
   "Name of asset"
   name: String! # event.params._name
   "Description of Asset"
@@ -32,9 +32,9 @@ type Asset @entity {
   canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
   "List of ERC20 and ERC1155 tokens used for payment"
   currencies: [String!]! # event.params._asset.currencies
-  "Block number at which GameAssets contract deployed"
+  "Block number at which Rain1155 contract deployed"
   creationBlock: BigInt! # event.block.number
-  "Timestamp at which GameAssets contract deployed"
+  "Timestamp at which Rain1155 contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
   "TokenURI of Asset"
   tokenURI: String! # event.params._asset.tokenURI
@@ -42,7 +42,7 @@ type Asset @entity {
 
 # create from AssetCreated event
 type PriceConfig @entity {
-  #{GameAsset.address}-{event.params._asset._assetId}
+  #{Rain1155.address}-{event.params._asset._assetId}
   id: ID!
   # event.params._asset._priceConfig.sources
   sources: [Bytes!]!
@@ -56,7 +56,7 @@ type PriceConfig @entity {
 
 # create from AssetCreated event
 type CanMintConfig @entity {
-  #{GameAsset.address}-{event.params._asset._assetId}
+  #{Rain1155.address}-{event.params._asset._assetId}
   id: ID!
   # event.params._asset._priceConfig.sources
   sources: [Bytes!]!
@@ -70,7 +70,7 @@ type CanMintConfig @entity {
 
 # Create on every TransferSingle or TransferBatch event
 type Holder @entity {
-  id: ID! #{GameAsset.address}-{event.params.to}
+  id: ID! #{Rain1155.address}-{event.params.to}
   "Address of holder"
   address: Bytes! # event.params.to
   "List of AssetsOwned"
@@ -78,7 +78,7 @@ type Holder @entity {
 }
 
 type AssetsOwned @entity {
-  id: ID! #{GameAsset.address}-{Receiver}-{event.params.id}
+  id: ID! #{Rain1155.address}-{Receiver}-{event.params.id}
   "Asset entity"
   asset: Asset! # Asset that is minted or transferd
   "Id of asset"

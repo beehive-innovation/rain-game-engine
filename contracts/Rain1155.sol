@@ -19,7 +19,7 @@ struct AssetConfig {
     string tokenURI;
 }
 
-contract GameAssets is ERC1155Supply, RainVM, VMState {
+contract Rain1155 is ERC1155Supply, RainVM, VMState {
     using Strings for uint256;
 
     uint256 internal constant TIER_REPORT_AT_BLOCK = 0;
