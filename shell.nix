@@ -162,6 +162,11 @@ let
 
     EOF
   '';
+
+  test-contract = pkgs.writeShellScriptBin "test-contract" ''
+    npm run build
+    npm run test-contract
+  '';
 in
 pkgs.stdenv.mkDerivation {
   name = "shell";
@@ -190,6 +195,7 @@ pkgs.stdenv.mkDerivation {
     prepublish
     solt-the-earth
     flush-all
+    test-contract
   ];
 
   shellHook = ''
