@@ -21,8 +21,6 @@ function createLocalHostConfig() {
       path: "m/44'/60'/0'/0",
     },
     url,
-    blockGasLimit: 30000000,
-    allowUnlimitedContractSize: true,
   };
 }
 
@@ -68,21 +66,19 @@ const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
   networks: {
     localhost: createLocalHostConfig(),
-    hardhat: {
-      blockGasLimit: 30000000,
-      allowUnlimitedContractSize: true,
-    },
     mumbai: {
       url: `https://polygon-mumbai.infura.io/v3/${process.env.API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
-    }
+      accounts: process.env.PRIVATE_KEY
+        ? [process.env.PRIVATE_KEY]
+        : { mnemonic: "" },
+    },
   },
   mocha: {
     timeout: 600000,
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY
-  }
+    apiKey: process.env.POLYGONSCAN_API_KEY,
+  },
 };
 
 export default config;

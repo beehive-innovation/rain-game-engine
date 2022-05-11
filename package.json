@@ -4,7 +4,8 @@
   "description": "Game engine for decentralized games.",
   "scripts": {
     "build": "hardhat compile",
-    "test": "hardhat test",
+    "test-contract": "hardhat test ./test/contract.test.ts --network hardhat",
+    "test-subgraph": "hardhat test ./test/subgraph.test.ts",
     "docgen": "solidity-docgen -o ./docs/api/ --solc-module solc-0.8 --exclude ./contracts/test/ -t ./.templates/",
     "lint": "eslint . --ext .ts",
     "lint-and-fix": "eslint . --ext .ts --fix",
@@ -18,9 +19,9 @@
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/blocks --version-label 1",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
-    "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
+    "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run codegen && npm run build-graph",
     "deploy:mumbai": "npm run prepare:mumbai && npm run codegen && npm run deploy",
-    "prepare:localhost": "npm run build && npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
+    "prepare:localhost": "npm run build && npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml && npm run codegen && npm run build-graph",
     "deploy:localhost": "npm run prepare:localhost && npm run create-local && npm run deploy-local",
     "deploy-contract": "hardhat run scripts/deploy.ts"
   },
