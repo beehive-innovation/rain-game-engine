@@ -19,11 +19,11 @@ type Asset @entity {
   "Name of asset"
   name: String! # event.params._name
   "Description of Asset"
-  descciption: String! # event.params._descciption
+  description: String! # event.params._descciption
   "Id of asset"
   assetId: BigInt! # event.params._asset._assetId
   "Creator of this asset"
-  recepient: Bytes! # event.params._asset.creator
+  recipient: Bytes! # event.params._asset.creator
   "Id of LootBox that contains this asset"
   lootBoxID: BigInt! # event.params._asset.lootBoxId
   "Script for price"

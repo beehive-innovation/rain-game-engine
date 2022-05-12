@@ -12,10 +12,10 @@ struct AssetConfig {
     string name;
     string description;
     uint256 lootBoxId;
-    StateConfig priceConfig;
-    StateConfig canMintConfig;
+    StateConfig priceScript;
+    StateConfig canMintScript;
     address[] currencies;
-    address recepient;
+    address recipient;
     string tokenURI;
 }
 
@@ -36,8 +36,8 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
     struct AssetDetails {
         uint256 lootBoxId;
         uint256 id;
-        State priceConfig;
-        State canMintConfig;
+        State priceScript;
+        State canMintScript;
         address[] currencies;
         address recepient;
         string tokenURI;
@@ -51,8 +51,8 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
     event AssetCreated(
         uint256 _assetId,
         AssetDetails _asset,
-        StateConfig _priceConfig,
-        StateConfig _canMintConfig,
+        StateConfig _priceScript,
+        StateConfig _canMintScript,
         string _name,
         string _description
     );
@@ -68,7 +68,7 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         view
         returns (bool)
     {
-        State memory state_ = assets[_assetId].canMintConfig;
+        State memory state_ = assets[_assetId].canMintScript;
         eval(abi.encode(_account), state_, 0);
 
         return (state_.stack[state_.stackIndex - 1] == 1);
@@ -91,18 +91,18 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         assets[totalAssets] = AssetDetails(
             _config.lootBoxId,
             totalAssets,
-            _restore(_snapshot(_newState(_config.priceConfig))),
-            _restore(_snapshot(_newState(_config.canMintConfig))),
+            _restore(_snapshot(_newState(_config.priceScript))),
+            _restore(_snapshot(_newState(_config.canMintScript))),
             _config.currencies,
-            _config.recepient,
+            _config.recipient,
             _config.tokenURI
         );
 
         emit AssetCreated(
             totalAssets,
             assets[totalAssets],
-            _config.priceConfig,
-            _config.canMintConfig,
+            _config.priceScript,
+            _config.canMintScript,
             _config.name,
             _config.description
         );
@@ -113,12 +113,12 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         address _paymentToken,
         uint256 _units
     ) public view returns (uint256[] memory) {
-        uint256 sourceIndex;
+        uint256 sourceIndex = 0;
         while (_paymentToken != assets[_assetId].currencies[sourceIndex]) {
             sourceIndex++;
         }
 
-        State memory state_ = assets[_assetId].priceConfig;
+        State memory state_ = assets[_assetId].priceScript;
         eval("", state_, sourceIndex);
         state_.stack[state_.stackIndex - 1] =
             state_.stack[state_.stackIndex - 1] *
