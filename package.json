@@ -68,7 +68,7 @@
     "@openzeppelin/contracts": "^4.5.0",
     "dotenv": "^16.0.0",
     "mustache": "^4.2.0",
-    "rain-game-sdk": "git+https://github.com/beehive-innovation/rain-game-sdk.git#2304705c3149aa2ca2b43ce9269c1475adeceb4a",
+    "rain-game-sdk": "git+https://github.com/beehive-innovation/rain-game-sdk.git#b98dc27d8807911179b1b7d739b5fb9f4ec47573",
     "rain-sdk": "^0.0.2-alpha.1"
   }
 }

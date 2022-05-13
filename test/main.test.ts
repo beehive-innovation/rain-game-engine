@@ -15,6 +15,7 @@ import { AssetConfig, Rain1155 as Rain1155SDK } from "rain-game-sdk";
 import { price, condition, Type, Conditions} from "rain-game-sdk";
 import { eighteenZeros, getEventArgs} from "./utils"
 import { Contract } from "ethers";
+import { CONNREFUSED } from "dns";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
@@ -41,7 +42,9 @@ export let erc20BalanceTier: ERC20BalanceTier
 export let signer1: SignerWithAddress,
   creator: SignerWithAddress,
   buyer1: SignerWithAddress,
-  buyer2: SignerWithAddress
+  buyer2: SignerWithAddress,
+  buyer3: SignerWithAddress,
+  buyer4: SignerWithAddress
 
 
 const subgraphName = "vishalkale151071/blocks";
@@ -53,6 +56,8 @@ before("Deploy Rain1155 Contract and subgraph", async function () {
   creator = signers[1];
   buyer1 = signers[2];
   buyer2 = signers[3];
+  buyer3 = signers[4];
+  buyer4 = signers[5];
 
 
   let Rain1155 = await ethers.getContractFactory("Rain1155");
@@ -130,8 +135,8 @@ describe("Rain1155 Test", () => {
     ];
     const canMintScript = rain1155SDK.generateCanMintScript(canMintConfig);
 
-    const assetConfig: AssetConfigStruct = {
-      lootBoxId: 0,
+    const assetConfig: AssetConfig = {
+      lootBoxId: ethers.BigNumber.from("0"),
       priceScript: priceScript,
       canMintScript: canMintScript,
       currencies: currencies,
@@ -141,11 +146,11 @@ describe("Rain1155 Test", () => {
       tokenURI: "URI",
     };
 
-    await rain1155.connect(creator).createNewAsset(assetConfig);
+    await rain1155SDK.connect(creator).createNewAsset(assetConfig);
 
     expect(await rain1155SDK.totalAssets()).to.deep.equals(ethers.BigNumber.from("1"));
 
-    let assetData = await rain1155.assets(1);
+    let assetData = await rain1155SDK.assets(1);
 
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
@@ -194,10 +199,10 @@ describe("Rain1155 Test", () => {
     ];
 
     const [priceScript, currencies] = rain1155SDK.generatePriceScript(priceConfig);
-    console.log(priceScript)
+
     const canMintScript = rain1155SDK.generateCanMintScript(canMintConfig);
 
-    const assetConfig: AssetConfigStruct = {
+    const assetConfig: AssetConfig = {
       lootBoxId: ethers.BigNumber.from(0),
       priceScript: priceScript,
       canMintScript: canMintScript,
@@ -208,11 +213,11 @@ describe("Rain1155 Test", () => {
       tokenURI: "URI2",
     };
 
-    await rain1155.connect(creator).createNewAsset(assetConfig);
+    await rain1155SDK.connect(creator).createNewAsset(assetConfig);
     
     expect(await rain1155SDK.totalAssets()).to.deep.equals(ethers.BigNumber.from("2"));
 
-    let assetData = await rain1155.assets(2);
+    let assetData = await rain1155SDK.assets(2);
 
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
@@ -232,13 +237,84 @@ describe("Rain1155 Test", () => {
 
     await USDT.connect(buyer2).mintTokens(1);
 
-    await CARS.connect(buyer2).mintTokens(1, 10);
-
-    await USDT.connect(buyer2).approve(rain1155.address, ethers.BigNumber.from("10" + eighteenZeros))
-
-    await rain1155SDK.mintAssets(2, 1);
-
     expect(await USDT.balanceOf(buyer2.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-    expect(await CARS.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("10"))
+    await USDT.connect(buyer2).approve(rain1155.address, ethers.BigNumber.from("1" + eighteenZeros))
+    await expectRevert(rain1155SDK.connect(buyer2).mintAssets(2,1), "ERC1155: caller is not owner nor approved");
+    
+    await CARS.connect(buyer2).mintTokens(1, 10);
+    expect(await CARS.balanceOf(buyer2.address, 1)).to.deep.equals(ethers.BigNumber.from("10"));
+    await CARS.connect(buyer2).setApprovalForAll(rain1155.address, true);
+
+    await rain1155SDK.connect(buyer2).mintAssets(2, 1);
+
+    expect(await rain1155SDK.balanceOf(buyer2.address, 2)).to.deep.equals(ethers.BigNumber.from(1));
   });
+
+  it("Should buy multiple assets",async () => {
+    await USDT.connect(buyer3).mintTokens(1 * 5);
+    await CARS.connect(buyer3).mintTokens(1, 10 * 5);
+    
+    await USDT.connect(buyer3).approve(rain1155.address, ethers.BigNumber.from("5" + eighteenZeros));
+    await CARS.connect(buyer3).setApprovalForAll(rain1155.address, true);
+
+    await rain1155SDK.connect(buyer3).mintAssets(2, 5);
+
+    expect(await rain1155SDK.balanceOf(buyer3.address, 2)).to.deep.equals(ethers.BigNumber.from(5));
+  });
+
+  it("Should create assets with minting condition",async () => {
+    const [priceScript, currencies] = rain1155SDK.generatePriceScript([]);
+
+    const canMintConfig: condition[] = [
+      {
+        type: Conditions.BLOCK_NUMBER,
+        blockNumber: 100,
+      },
+      {
+        type: Conditions.BALANCE_TIER,
+        tierAddress: erc20BalanceTier.address,
+        tierCondition: 4
+      },
+      {
+        type: Conditions.ERC20BALANCE,
+        address: BNB.address,
+        balance: ethers.BigNumber.from("10" + eighteenZeros)
+      },
+      {
+        type: Conditions.ERC1155BALANCE,
+        address: PLANES.address,
+        balance: ethers.BigNumber.from("10"),
+        id: ethers.BigNumber.from(1)
+      },
+      {
+        type: Conditions.ERC721BALANCE,
+        address: BAYC.address,
+        balance: ethers.BigNumber.from(0)
+      }
+    ]
+
+    const canMintScript = rain1155SDK.generateCanMintScript(canMintConfig);
+
+    const assetConfig: AssetConfig = {
+      lootBoxId: ethers.BigNumber.from(0),
+      priceScript: priceScript,
+      canMintScript: canMintScript,
+      currencies: currencies,
+      name: "F3",
+      description: "BRUUUUMMM3 BRUUUMMM3",
+      recipient: creator.address,
+      tokenURI: "URI3",
+    };
+
+    await rain1155SDK.connect(creator).createNewAsset(assetConfig);
+
+    await rTKN.connect(buyer4).mintTokens(5);
+    await BNB.connect(buyer4).mintTokens(11);
+    await PLANES.connect(buyer4).mintTokens(1,11);
+    await BAYC.connect(buyer4).mintNewToken();
+
+    await rain1155SDK.connect(buyer4).mintAssets(3,1);
+    
+    expect(await rain1155SDK.balanceOf(buyer4.address, 3)).to.deep.equals(ethers.BigNumber.from(1));
+  })
 });
