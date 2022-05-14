@@ -1,7 +1,7 @@
 {
-  "name": "rain-game-engine",
+  "name": "rain1155",
   "version": "0.0.1",
-  "description": "Game engine for decentralized games.",
+  "description": "rain version of ERC1155 contract for decentralised games",
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
@@ -26,14 +26,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beehive-innovation/rain-game-engine.git"
+    "url": "git+https://github.com/beehive-innovation/rain1155.git"
   },
   "author": "beehive-innovation",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/beehive-innovation/rain-game-engine/issues"
+    "url": "https://github.com/beehive-innovation/rain1155/issues"
   },
-  "homepage": "https://github.com/beehive-innovation/rain-game-engine#readme",
+  "homepage": "https://github.com/beehive-innovation/rain1155#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
