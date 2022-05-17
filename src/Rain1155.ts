@@ -7,15 +7,17 @@ import {
     URI
 } from "../generated/Rain1155/Rain1155";
 
-import { 
+import {
     Rain1155,
     Asset,
-    PriceConfig, 
+    PriceConfig,
     CanMintConfig,
     Holder,
     AssetsOwned
 } from "../generated/schema"
 import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
+
+import { ipfs, log, json, Bytes, JSONValueKind } from '@graphprotocol/graph-ts'
 
 export function handleInitialize(event: Initialize): void {
     let rain1155 = new Rain1155(event.address.toHex())
@@ -38,9 +40,22 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.creationTimestamp = event.block.timestamp;
     asset.tokenURI = event.params._asset.tokenURI;
 
+    // ----------------------------------------- <Fetch  data from IPFS>
+    let ipfsHash = event.params._asset.tokenURI.split('/').pop()
+    let ipfsMetadata = ipfs.cat(ipfsHash);
+    if (ipfsMetadata) {
+        //  Add JSON object as a string
+        asset.metadata = ipfsMetadata.toString();
+    }else
+    {        
+        asset.metadata = "";
+    }
+    // ----------------------------------------- </Fetch  data from IPFS>
+
     let _currencies = event.params._asset.currencies;
     let currencies = asset.currencies;
-    for(let i=0; i<_currencies.length;i++){
+
+    for (let i = 0; i < _currencies.length; i++) {
         currencies.push(_currencies[i].toHex());
     }
 
@@ -67,15 +82,17 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.save()
 
     let rain1155 = Rain1155.load(event.address.toHex());
-    if(rain1155){
+    if (rain1155) {
         let assets = rain1155.assets;
-        if(assets) assets.push(asset.id);
+        if (assets) assets.push(asset.id);
         rain1155.assets = assets;
 
         rain1155.totalAssets = rain1155.totalAssets.plus(ONE_BI);
 
         rain1155.save();
     }
+
+
 }
 
 export function handleSnapshot(event: Snapshot): void {
@@ -84,23 +101,23 @@ export function handleSnapshot(event: Snapshot): void {
 export function handleTransferBatch(event: TransferBatch): void {
     let ids = event.params.ids
     let values = event.params.values
-    while(ids && values){
+    while (ids && values) {
         let id = ids.pop()
         let value = values.pop()
 
         let receiver = Holder.load(event.address.toHex() + "-" + event.params.to.toHex());
-        if(!receiver){
+        if (!receiver) {
             receiver = new Holder(event.address.toHex() + "-" + event.params.to.toHex());
             receiver.address = event.params.to;
             receiver.assetsOwned = []
         }
-            
+
         let assetsOwned = AssetsOwned.load(event.address.toHex() + "-" + event.params.to.toHex() + "-" + id.toString());
-        if(!assetsOwned){
+        if (!assetsOwned) {
             assetsOwned = new AssetsOwned(event.address.toHex() + "-" + event.params.to.toHex() + "-" + id.toString());
             assetsOwned.count = ZERO_BI;
             let asset = Asset.load(event.address.toHex() + "-" + id.toString());
-            if(asset){
+            if (asset) {
                 assetsOwned.asset = asset.id;
                 assetsOwned.assetId = asset.assetId;
             }
@@ -109,25 +126,25 @@ export function handleTransferBatch(event: TransferBatch): void {
         assetsOwned.save();
 
         let holdersAssetsOwned = receiver.assetsOwned;
-        if(holdersAssetsOwned && !holdersAssetsOwned.includes(assetsOwned.id)){
+        if (holdersAssetsOwned && !holdersAssetsOwned.includes(assetsOwned.id)) {
             holdersAssetsOwned.push(assetsOwned.id);
         }
         receiver.assetsOwned = holdersAssetsOwned;
-        
+
         receiver.save();
 
-        if(event.params.from.notEqual(ZERO_ADDRESS)){
+        if (event.params.from.notEqual(ZERO_ADDRESS)) {
             let assetsOwned = AssetsOwned.load(event.address.toHex() + "-" + event.params.from.toHex() + "-" + id.toString());
-            if(assetsOwned){
+            if (assetsOwned) {
                 assetsOwned.count = assetsOwned.count.minus(value);
                 assetsOwned.save();
             }
         }
 
         let rain1155 = Rain1155.load(event.address.toHex());
-        if(rain1155){
+        if (rain1155) {
             let holders = rain1155.holders;
-            if(holders && !holders.includes(receiver.id)){
+            if (holders && !holders.includes(receiver.id)) {
                 holders.push(receiver.id)
             }
             rain1155.holders = holders;
@@ -139,18 +156,18 @@ export function handleTransferBatch(event: TransferBatch): void {
 
 export function handleTransferSingle(event: TransferSingle): void {
     let receiver = Holder.load(event.address.toHex() + "-" + event.params.to.toHex());
-    if(!receiver){
+    if (!receiver) {
         receiver = new Holder(event.address.toHex() + "-" + event.params.to.toHex());
         receiver.address = event.params.to;
         receiver.assetsOwned = []
     }
-        
+
     let assetsOwned = AssetsOwned.load(event.address.toHex() + "-" + event.params.to.toHex() + "-" + event.params.id.toString());
-    if(!assetsOwned){
+    if (!assetsOwned) {
         assetsOwned = new AssetsOwned(event.address.toHex() + "-" + event.params.to.toHex() + "-" + event.params.id.toString());
         assetsOwned.count = ZERO_BI;
         let asset = Asset.load(event.address.toHex() + "-" + event.params.id.toString());
-        if(asset){
+        if (asset) {
             assetsOwned.asset = asset.id;
             assetsOwned.assetId = asset.assetId;
         }
@@ -159,25 +176,25 @@ export function handleTransferSingle(event: TransferSingle): void {
     assetsOwned.save();
 
     let holdersAssetsOwned = receiver.assetsOwned;
-    if(holdersAssetsOwned && !holdersAssetsOwned.includes(assetsOwned.id)){
+    if (holdersAssetsOwned && !holdersAssetsOwned.includes(assetsOwned.id)) {
         holdersAssetsOwned.push(assetsOwned.id);
     }
     receiver.assetsOwned = holdersAssetsOwned;
-    
+
     receiver.save();
 
-    if(event.params.from.notEqual(ZERO_ADDRESS)){
+    if (event.params.from.notEqual(ZERO_ADDRESS)) {
         let assetsOwned = AssetsOwned.load(event.address.toHex() + "-" + event.params.from.toHex() + "-" + event.params.id.toString());
-        if(assetsOwned){
+        if (assetsOwned) {
             assetsOwned.count = assetsOwned.count.minus(event.params.value);
             assetsOwned.save();
         }
     }
 
     let rain1155 = Rain1155.load(event.address.toHex());
-    if(rain1155){
+    if (rain1155) {
         let holders = rain1155.holders;
-        if(holders && !holders.includes(receiver.id)){
+        if (holders && !holders.includes(receiver.id)) {
             holders.push(receiver.id)
         }
         rain1155.holders = holders;

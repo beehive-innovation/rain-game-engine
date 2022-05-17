@@ -38,6 +38,8 @@ type Asset @entity {
   creationTimestamp: BigInt! # event.block.timestamp
   "TokenURI of Asset"
   tokenURI: String! # event.params._asset.tokenURI
+  "Asset Metadata"
+  metadata: String!
 }
 
 # create from AssetCreated event

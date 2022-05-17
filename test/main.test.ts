@@ -231,7 +231,7 @@ describe("Rain1155 Test", function () {
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
       recipient: creator.address,
-      tokenURI: "URI",
+      tokenURI: "https://ipfs.io/ipfs/QmVfbKBM7XxqZMRFzRGPGkWT8oUFNYY1DeK5dcoTgLuV8H",
     }
 
     await rain1155.connect(gameAsstesOwner).createNewAsset(assetConfig);
@@ -245,7 +245,7 @@ describe("Rain1155 Test", function () {
 
     expect(expectAsset).to.deep.equals({
       lootBoxId: ethers.BigNumber.from("0"),
-      tokenURI: "URI",
+      tokenURI: "https://ipfs.io/ipfs/QmVfbKBM7XxqZMRFzRGPGkWT8oUFNYY1DeK5dcoTgLuV8H",
       creator: creator.address,
     })
   });
