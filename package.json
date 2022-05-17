@@ -69,6 +69,7 @@
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/contracts": "^4.5.0",
     "dotenv": "^16.0.0",
+    "gluegun": "^5.1.2",
     "mustache": "^4.2.0",
     "rain-game-sdk": "0.0.1-alpha.1",
     "rain-sdk": "^0.0.2-alpha.1"

@@ -35,7 +35,7 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.description = event.params._description;
     asset.assetId = event.params._assetId;
     asset.lootBoxID = event.params._asset.lootBoxId;
-    asset.recipient = event.params._asset.recepient;
+    asset.recipient = event.params._asset.recipient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
     asset.tokenURI = event.params._asset.tokenURI;

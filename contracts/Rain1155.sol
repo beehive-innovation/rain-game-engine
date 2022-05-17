@@ -39,7 +39,7 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         State priceScript;
         State canMintScript;
         address[] currencies;
-        address recepient;
+        address recipient;
         string tokenURI;
     }
 
@@ -140,13 +140,13 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
             if (stack_[0] == 0) {
                 ITransfer(assets[_assetId].currencies[i]).transferFrom(
                     msg.sender,
-                    assets[_assetId].recepient,
+                    assets[_assetId].recipient,
                     stack_[1]
                 );
             } else if (stack_[0] == 1) {
                 ITransfer(assets[_assetId].currencies[i]).safeTransferFrom(
                     msg.sender,
-                    assets[_assetId].recepient,
+                    assets[_assetId].recipient,
                     stack_[1],
                     stack_[2],
                     ""
