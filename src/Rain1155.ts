@@ -30,10 +30,10 @@ export function handleInitialize(event: Initialize): void {
 export function handleAssetCreated(event: AssetCreated): void {
     let asset = new Asset(event.address.toHex() + "-" + event.params._assetId.toString());
     asset.name = event.params._name;
-    asset.descciption = event.params._description;
+    asset.description = event.params._description;
     asset.assetId = event.params._assetId;
     asset.lootBoxID = event.params._asset.lootBoxId;
-    asset.recepient = event.params._asset.recepient;
+    asset.recipient = event.params._asset.recepient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
     asset.tokenURI = event.params._asset.tokenURI;
@@ -47,19 +47,19 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.currencies = currencies;
 
     let priceConfig = new PriceConfig(event.address.toHex() + "-" + event.params._assetId.toString())
-    priceConfig.constants = event.params._priceConfig.constants;
-    priceConfig.sources = event.params._priceConfig.sources;
-    priceConfig.argumentsLength = event.params._priceConfig.argumentsLength;
-    priceConfig.stackLength = event.params._priceConfig.stackLength;
+    priceConfig.constants = event.params._priceScript.constants;
+    priceConfig.sources = event.params._priceScript.sources;
+    priceConfig.argumentsLength = event.params._priceScript.argumentsLength;
+    priceConfig.stackLength = event.params._priceScript.stackLength;
     priceConfig.save();
 
     asset.priceConfig = priceConfig.id;
 
     let canMintConfig = new CanMintConfig(event.address.toHex() + "-" + event.params._assetId.toString())
-    canMintConfig.constants = event.params._canMintConfig.constants;
-    canMintConfig.sources = event.params._canMintConfig.sources;
-    canMintConfig.argumentsLength = event.params._canMintConfig.argumentsLength;
-    canMintConfig.stackLength = event.params._canMintConfig.stackLength;
+    canMintConfig.constants = event.params._canMintScript.constants;
+    canMintConfig.sources = event.params._canMintScript.sources;
+    canMintConfig.argumentsLength = event.params._canMintScript.argumentsLength;
+    canMintConfig.stackLength = event.params._canMintScript.stackLength;
     canMintConfig.save();
 
     asset.canMintConfig = canMintConfig.id;

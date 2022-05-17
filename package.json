@@ -64,11 +64,13 @@
   },
   "dependencies": {
     "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#2dd7102e9addf0662bc0aef2a6aacb8b82edf089",
+    "@graphprotocol/graph-cli": "^0.26.0",
+    "@graphprotocol/graph-ts": "^0.26.0",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/contracts": "^4.5.0",
     "dotenv": "^16.0.0",
     "mustache": "^4.2.0",
-    "rain-game-sdk": "git+https://github.com/beehive-innovation/rain-game-sdk.git#b98dc27d8807911179b1b7d739b5fb9f4ec47573",
+    "rain-game-sdk": "0.0.1-alpha.1",
     "rain-sdk": "^0.0.2-alpha.1"
   }
 }
