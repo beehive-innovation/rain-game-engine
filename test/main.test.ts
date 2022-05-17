@@ -227,7 +227,7 @@ describe("Rain1155 Test", function () {
       lootBoxId: 0,
       priceScript: priceConfig,
       canMintScript: canMintConfig,
-      currencies: [],
+      currencies: currencies,
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
       recipient: creator.address,
@@ -240,7 +240,7 @@ describe("Rain1155 Test", function () {
     let expectAsset = {
       lootBoxId: assetData.lootBoxId,
       tokenURI: assetData.tokenURI,
-      creator: assetData.recepient,
+      creator: assetData.recipient,
     }
 
     expect(expectAsset).to.deep.equals({
@@ -264,17 +264,16 @@ describe("Rain1155 Test", function () {
     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
     await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
 
-    // let USDTPrice = (await rain1155.getAssetPrice(1, USDT.address, 1))[1]
-    // let BNBPrice = (await rain1155.getAssetPrice(1, BNB.address, 1))[1]
+    let USDTPrice = (await rain1155.getAssetPrice(1, USDT.address, 1))[1]
+    let BNBPrice = (await rain1155.getAssetPrice(1, BNB.address, 1))[1]
 
-    // await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
-    // await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);
+    await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
+    await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);
     
-    // await CARS.connect(buyer1).setApprovalForAll(rain1155.address, true);
-    // await PLANES.connect(buyer1).setApprovalForAll(rain1155.address, true);
+    await CARS.connect(buyer1).setApprovalForAll(rain1155.address, true);
+    await PLANES.connect(buyer1).setApprovalForAll(rain1155.address, true);
     
     await rain1155.connect(buyer1).mintAssets(1,1);
-    // expect(await rain1155.uri(1)).to.equals(`URI`);
 
     expect(await rain1155.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
 
