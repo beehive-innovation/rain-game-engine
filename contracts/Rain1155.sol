@@ -47,7 +47,6 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
 
     // EVENTS
     event Initialize(address _deployer);
-    event ClassCreated(string[] _classData);
     event AssetCreated(
         uint256 _assetId,
         AssetDetails _asset,

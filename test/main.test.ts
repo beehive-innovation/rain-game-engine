@@ -186,6 +186,7 @@ describe("Rain1155 Test", function () {
     ] ;
 
     const [priceConfig, currencies] = rain1155SDK.generatePriceScript(prices);
+    console.log(currencies)
 
     const tierCondition = 4
     const blockCondition = 15

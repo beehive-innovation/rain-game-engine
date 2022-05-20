@@ -19,9 +19,11 @@ dataSources:
       abis:
         - name: Rain1155
           file: ./abis/Rain1155.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC721
+          file: ./abis/ERC721.json
       eventHandlers:
-        - event: ClassCreated(string[])
-          handler: handleClassCreated
         - event: Initialize(address)
           handler: handleInitialize
         - event: AssetCreated(uint256,(uint256,uint256,(uint256,uint256[],bytes[],uint256[],uint256[]),(uint256,uint256[],bytes[],uint256[],uint256[]),address[],address,string),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),string,string)

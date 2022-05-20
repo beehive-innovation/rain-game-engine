@@ -15,9 +15,9 @@ import {
     Holder,
     AssetsOwned
 } from "../generated/schema"
-import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
+import { getCurrency, getERCType, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
-import { ipfs, log, json, Bytes, JSONValueKind } from '@graphprotocol/graph-ts'
+import { ipfs } from '@graphprotocol/graph-ts'
 
 export function handleInitialize(event: Initialize): void {
     let rain1155 = new Rain1155(event.address.toHex())
@@ -56,7 +56,8 @@ export function handleAssetCreated(event: AssetCreated): void {
     let currencies = asset.currencies;
 
     for (let i = 0; i < _currencies.length; i++) {
-        currencies.push(_currencies[i].toHex());
+        let currency = getCurrency(_currencies[i], getERCType(_currencies[i]), event.params._priceScript.constants, i);
+        currencies.push(currency.id);
     }
 
     asset.currencies = currencies;
@@ -202,5 +203,4 @@ export function handleTransferSingle(event: TransferSingle): void {
     }
 }
 export function handleURI(event: URI): void {
-
 }

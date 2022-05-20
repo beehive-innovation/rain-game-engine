@@ -31,7 +31,7 @@ type Asset @entity {
   "Script for mintConditions"
   canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
   "List of ERC20 and ERC1155 tokens used for payment"
-  currencies: [String!]! # event.params._asset.currencies
+  currencies: [Currency!]! # event.params._asset.currencies
   "Block number at which Rain1155 contract deployed"
   creationBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
@@ -88,4 +88,14 @@ type AssetsOwned @entity {
   "Amount of this asset owned"
   count: BigInt! # TotalNumber of assets Owned of AssetId
   # Increament for every AssetId.
+}
+
+type Currency @entity {
+  id: ID! # token Address
+  address: Bytes! # token Address
+  type: String!
+  name: String
+  symbol: String
+  decimals: Int
+  tokenURI: String
 }
