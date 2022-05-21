@@ -97,5 +97,6 @@ type Currency @entity {
   name: String
   symbol: String
   decimals: Int
+  tokenId: BigInt
   tokenURI: String
 }

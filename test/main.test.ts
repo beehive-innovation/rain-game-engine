@@ -150,7 +150,13 @@ describe("Rain1155 Test", function () {
     // console.log(USDT.address, BNB.address, SOL.address, XRP.address)
   });
 
+
+
   it("Should create asset from creator.", async function () {
+    /// Minting before creating assets
+    await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
+    await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
+
 
     const prices: price[] = [
       {
@@ -252,6 +258,9 @@ describe("Rain1155 Test", function () {
   });
 
   it("Should buy asset '1'", async function() {
+
+    await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
+
     await rTKN.connect(buyer1).mintTokens(5)
 
     await USDT.connect(buyer1).mintTokens(1);
@@ -260,10 +269,6 @@ describe("Rain1155 Test", function () {
     await SOL.connect(buyer1).mintTokens(11);
 
     await BAYC.connect(buyer1).mintNewToken();
-    
-    await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
-    await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
-    await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
 
     let USDTPrice = (await rain1155.getAssetPrice(1, USDT.address, 1))[1]
     let BNBPrice = (await rain1155.getAssetPrice(1, BNB.address, 1))[1]

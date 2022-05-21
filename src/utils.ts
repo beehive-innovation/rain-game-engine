@@ -18,8 +18,8 @@ export enum ERCType{
 }
 export function getERCType(address: Bytes): ERCType {
     let Contract = Rain1155.bind(Address.fromBytes(address));
-    let erc1155InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0xd9b67a26'))
     let erc721InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0x80ac58cd'))
+    let erc1155InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0xd9b67a26'))
     if(!erc721InterfaceId.reverted){
         if(erc721InterfaceId.value == true){
             return ERCType.ERC721;
@@ -72,7 +72,8 @@ export function getCurrency(address: Bytes, type: ERCType, constants: BigInt[], 
             log.info("TokenID : {}", [constants[i+1].toString()])
             let uri = erc1155.try_uri(constants[i+1]);
             if(!uri.reverted) currency.tokenURI = uri.value;
-            else currency.tokenURI = "Token may not exists now";
+            else currency.tokenURI = `TokenId ${constants[i+1]} may not exists now`;
+            currency.tokenId = constants[i+1];
             currency.save();
         }else{
             currency.type = "UNKNOWN";

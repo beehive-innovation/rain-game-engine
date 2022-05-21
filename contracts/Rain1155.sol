@@ -26,7 +26,9 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
 
     uint256 internal constant ACCOUNT = 1;
 
-    uint256 internal constant LOCAL_OPS_LENGTH = 2;
+    uint256 internal constant CURRENT_UNITS = 2;
+
+    uint256 internal constant LOCAL_OPS_LENGTH = 3;
 
     uint256 private immutable localOpsStart =
         ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
@@ -46,14 +48,14 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
     mapping(uint256 => AssetDetails) public assets;
 
     // EVENTS
-    event Initialize(address _deployer);
+    event Initialize(address deployer_);
     event AssetCreated(
-        uint256 _assetId,
-        AssetDetails _asset,
-        StateConfig _priceScript,
-        StateConfig _canMintScript,
-        string _name,
-        string _description
+        uint256 assetId_,
+        AssetDetails asset_,
+        StateConfig priceScript_,
+        StateConfig canMintScript_,
+        string name_,
+        string description_
     );
 
     // EVENTS END
@@ -62,13 +64,13 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         emit Initialize(msg.sender);
     }
 
-    function canMint(uint256 _assetId, address _account)
+    function canMint(uint256 assetId_, address account_)
         public
         view
         returns (bool)
     {
-        State memory state_ = assets[_assetId].canMintScript;
-        eval(abi.encode(_account), state_, 0);
+        State memory state_ = assets[assetId_].canMintScript;
+        eval(abi.encode(account_), state_, 0);
 
         return (state_.stack[state_.stackIndex - 1] == 1);
     }
@@ -84,75 +86,75 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         return assets[_tokenId].tokenURI;
     }
 
-    function createNewAsset(AssetConfig memory _config) external {
+    function createNewAsset(AssetConfig memory config_) external {
         totalAssets = totalAssets + 1;
 
         assets[totalAssets] = AssetDetails(
-            _config.lootBoxId,
+            config_.lootBoxId,
             totalAssets,
-            _restore(_snapshot(_newState(_config.priceScript))),
-            _restore(_snapshot(_newState(_config.canMintScript))),
-            _config.currencies,
-            _config.recipient,
-            _config.tokenURI
+            _restore(_snapshot(_newState(config_.priceScript))),
+            _restore(_snapshot(_newState(config_.canMintScript))),
+            config_.currencies,
+            config_.recipient,
+            config_.tokenURI
         );
 
         emit AssetCreated(
             totalAssets,
             assets[totalAssets],
-            _config.priceScript,
-            _config.canMintScript,
-            _config.name,
-            _config.description
+            config_.priceScript,
+            config_.canMintScript,
+            config_.name,
+            config_.description
         );
     }
 
     function getAssetPrice(
-        uint256 _assetId,
-        address _paymentToken,
-        uint256 _units
+        uint256 assetId_,
+        address paymentToken_,
+        uint256 units_
     ) public view returns (uint256[] memory) {
         uint256 sourceIndex = 0;
-        while (_paymentToken != assets[_assetId].currencies[sourceIndex]) {
+        while (paymentToken_ != assets[assetId_].currencies[sourceIndex]) {
             sourceIndex++;
         }
 
-        State memory state_ = assets[_assetId].priceScript;
-        eval("", state_, sourceIndex);
-        state_.stack[state_.stackIndex - 1] =
-            state_.stack[state_.stackIndex - 1] *
-            _units;
+        State memory state_ = assets[assetId_].priceScript;
+        eval(abi.encode(units_), state_, sourceIndex);
+        state_.stack[state_.stackIndex - 1] = state_.stack[
+            state_.stackIndex - 1
+        ];
 
         return state_.stack;
     }
 
-    function mintAssets(uint256 _assetId, uint256 _units) external {
-        require(_assetId <= totalAssets, "Invalid AssetId");
-        require(canMint(_assetId, msg.sender), "Cant Mint");
-        for (uint256 i = 0; i < assets[_assetId].currencies.length; i = i + 1) {
+    function mintAssets(uint256 assetId_, uint256 units_) external {
+        require(assetId_ <= totalAssets, "Invalid AssetId");
+        require(canMint(assetId_, msg.sender), "Cant Mint");
+        for (uint256 i = 0; i < assets[assetId_].currencies.length; i = i + 1) {
             uint256[] memory stack_ = getAssetPrice(
-                _assetId,
-                assets[_assetId].currencies[i],
-                _units
+                assetId_,
+                assets[assetId_].currencies[i],
+                units_
             );
             // console.log(stack[0], stack[1], stack[2]);
             if (stack_[0] == 0) {
-                ITransfer(assets[_assetId].currencies[i]).transferFrom(
+                ITransfer(assets[assetId_].currencies[i]).transferFrom(
                     msg.sender,
-                    assets[_assetId].recipient,
+                    assets[assetId_].recipient,
                     stack_[1]
                 );
             } else if (stack_[0] == 1) {
-                ITransfer(assets[_assetId].currencies[i]).safeTransferFrom(
+                ITransfer(assets[assetId_].currencies[i]).safeTransferFrom(
                     msg.sender,
-                    assets[_assetId].recipient,
+                    assets[assetId_].recipient,
                     stack_[1],
                     stack_[2],
                     ""
                 );
             }
         }
-        _mint(_msgSender(), _assetId, _units, "");
+        _mint(_msgSender(), assetId_, units_, "");
     }
 
     function applyOp(
@@ -184,6 +186,10 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
                     state_.stack[state_.stackIndex] = uint256(
                         uint160(account_)
                     );
+                    state_.stackIndex++;
+                } else if (opcode_ == CURRENT_UNITS) {
+                    uint256 units_ = abi.decode(context_, (uint256));
+                    state_.stack[state_.stackIndex] = units_;
                     state_.stackIndex++;
                 }
             }
