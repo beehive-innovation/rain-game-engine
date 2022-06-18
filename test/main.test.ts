@@ -232,8 +232,7 @@ describe("Rain1155 Test", function () {
 
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,
-      priceScript: priceConfig,
-      canMintScript: canMintConfig,
+      vmStateConfig: vmStateConfig,
       currencies: currencies,
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",

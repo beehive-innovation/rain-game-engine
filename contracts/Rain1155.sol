@@ -5,63 +5,78 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
 import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
-import {VMState, StateConfig} from "@beehiveinnovation/rain-protocol/contracts/vm/libraries/VMState.sol";
-import {AllStandardOps, ALL_STANDARD_OPS_START, ALL_STANDARD_OPS_LENGTH} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
+import {AllStandardOps} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
+import "@beehiveinnovation/rain-protocol/contracts/vm/VMStateBuilder.sol";
+
+struct Rain1155Config {
+    address vmStateBuilder;
+}
 
 struct AssetConfig {
     string name;
     string description;
     uint256 lootBoxId;
-    StateConfig priceScript;
-    StateConfig canMintScript;
+    StateConfig vmStateConfig;
     address[] currencies;
     address recipient;
     string tokenURI;
 }
 
-contract Rain1155 is ERC1155Supply, RainVM, VMState {
+contract Rain1155 is ERC1155Supply, RainVM {
     using Strings for uint256;
 
-    uint256 internal constant TIER_REPORT_AT_BLOCK = 0;
-
-    uint256 internal constant ACCOUNT = 1;
-
-    uint256 internal constant CURRENT_UNITS = 2;
-
-    uint256 internal constant LOCAL_OPS_LENGTH = 3;
-
-    uint256 private immutable localOpsStart =
-        ALL_STANDARD_OPS_START + ALL_STANDARD_OPS_LENGTH;
-
     uint256 public totalAssets;
+
+    address private immutable self;
+    address private immutable vmStateBuilder;
+
+    Bounds private canMintBound;
+    mapping(uint256 => mapping(address => uint256)) private priceEntryPoint;
+    mapping(uint256 => AssetDetails) public assets;
 
     struct AssetDetails {
         uint256 lootBoxId;
         uint256 id;
-        State priceScript;
-        State canMintScript;
         address[] currencies;
+        StateConfig vmStateConfig;
+        address vmStatePointer;
         address recipient;
         string tokenURI;
     }
 
-    mapping(uint256 => AssetDetails) public assets;
-
     // EVENTS
-    event Initialize(address deployer_);
+    event Initialize(address deployer_, Rain1155Config config_);
     event AssetCreated(
         uint256 assetId_,
         AssetDetails asset_,
-        StateConfig priceScript_,
-        StateConfig canMintScript_,
         string name_,
         string description_
     );
 
     // EVENTS END
 
-    constructor() ERC1155("") {
-        emit Initialize(msg.sender);
+    constructor(Rain1155Config memory config_) ERC1155("") {
+        self = address(this);
+        vmStateBuilder = config_.vmStateBuilder;
+        canMintBound.entrypoint = 0;
+        canMintBound.minFinalStackIndex = 1;
+        emit Initialize(msg.sender, config_);
+    }
+
+    function _loadState(uint256 assetId_) internal view returns (State memory) {
+        return
+            LibState.fromBytesPacked(
+                SSTORE2.read(assets[assetId_].vmStatePointer)
+            );
+    }
+
+    function _priceEntryPoint(uint256 assetId_, address paymentToken_)
+        internal
+        view
+        returns (uint256 entrtyPoint)
+    {
+        entrtyPoint = priceEntryPoint[assetId_][paymentToken_];
+        require(entrtyPoint != 0, "Invalid payment token");
     }
 
     function canMint(uint256 assetId_, address account_)
@@ -69,9 +84,13 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         view
         returns (bool)
     {
-        State memory state_ = assets[assetId_].canMintScript;
-        eval(abi.encode(account_), state_, 0);
-
+        bytes memory context_ = new bytes(0x20);
+        address sender = msg.sender;
+        assembly {
+            mstore(add(context_, 0x20), sender)
+        }
+        State memory state_ = _loadState(assetId_);
+        eval(context_, state_, canMintBound.entrypoint);
         return (state_.stack[state_.stackIndex - 1] == 1);
     }
 
@@ -88,13 +107,26 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
 
     function createNewAsset(AssetConfig memory config_) external {
         totalAssets = totalAssets + 1;
+        Bounds[] memory bounds_ = new Bounds[](config_.currencies.length + 1);
+        bounds_[0] = canMintBound;
+        for (uint256 i = 0; i < config_.currencies.length; i++) {
+            bounds_[i + 1].entrypoint = i + 1;
+            bounds_[i + 1].minFinalStackIndex = i + 2;
+            priceEntryPoint[totalAssets][config_.currencies[i]] = i + 1;
+        }
+
+        bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
+            self,
+            config_.vmStateConfig,
+            bounds_
+        );
 
         assets[totalAssets] = AssetDetails(
             config_.lootBoxId,
             totalAssets,
-            _restore(_snapshot(_newState(config_.priceScript))),
-            _restore(_snapshot(_newState(config_.canMintScript))),
             config_.currencies,
+            config_.vmStateConfig,
+            SSTORE2.write(vmStateBytes_),
             config_.recipient,
             config_.tokenURI
         );
@@ -102,30 +134,23 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
         emit AssetCreated(
             totalAssets,
             assets[totalAssets],
-            config_.priceScript,
-            config_.canMintScript,
             config_.name,
             config_.description
         );
     }
 
     function getAssetPrice(
-        uint256 assetId_,
-        address paymentToken_,
-        uint256 units_
-    ) public view returns (uint256[] memory) {
-        uint256 sourceIndex = 0;
-        while (paymentToken_ != assets[assetId_].currencies[sourceIndex]) {
-            sourceIndex++;
+        uint256 assetId,
+        address paymentToken,
+        uint256 units
+    ) public view returns (uint256[] memory stack) {
+        bytes memory context_ = new bytes(0x20);
+        assembly {
+            mstore(add(context_, 0x20), units)
         }
-
-        State memory state_ = assets[assetId_].priceScript;
-        eval(abi.encode(units_), state_, sourceIndex);
-        state_.stack[state_.stackIndex - 1] = state_.stack[
-            state_.stackIndex - 1
-        ];
-
-        return state_.stack;
+        State memory state_ = _loadState(assetId);
+        eval(context_, state_, _priceEntryPoint(assetId, paymentToken));
+        stack = state_.stack;
     }
 
     function mintAssets(uint256 assetId_, uint256 units_) external {
@@ -154,46 +179,11 @@ contract Rain1155 is ERC1155Supply, RainVM, VMState {
                 );
             }
         }
-        _mint(_msgSender(), assetId_, units_, "");
+        _mint(msg.sender, assetId_, units_, "");
     }
 
-    function applyOp(
-        bytes memory context_,
-        State memory state_,
-        uint256 opcode_,
-        uint256 operand_
-    ) internal view virtual override {
-        unchecked {
-            if (opcode_ < localOpsStart) {
-                AllStandardOps.applyOp(
-                    state_,
-                    opcode_ - ALL_STANDARD_OPS_START,
-                    operand_
-                );
-            } else {
-                opcode_ -= localOpsStart;
-                require(opcode_ < LOCAL_OPS_LENGTH, "MAX_OPCODE");
-                // There's only one opcode, which stacks the address to report.
-                if (opcode_ == TIER_REPORT_AT_BLOCK) {
-                    state_.stack[state_.stackIndex - 2] = TierReport
-                        .tierAtBlockFromReport(
-                            state_.stack[state_.stackIndex - 2],
-                            state_.stack[state_.stackIndex - 1]
-                        );
-                    state_.stackIndex--;
-                } else if (opcode_ == ACCOUNT) {
-                    address account_ = abi.decode(context_, (address));
-                    state_.stack[state_.stackIndex] = uint256(
-                        uint160(account_)
-                    );
-                    state_.stackIndex++;
-                } else if (opcode_ == CURRENT_UNITS) {
-                    uint256 units_ = abi.decode(context_, (uint256));
-                    state_.stack[state_.stackIndex] = units_;
-                    state_.stackIndex++;
-                }
-            }
-        }
+    function fnPtrs() public pure override returns (bytes memory) {
+        return AllStandardOps.fnPtrs();
     }
 }
 
