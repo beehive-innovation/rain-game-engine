@@ -59,7 +59,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
         self = address(this);
         vmStateBuilder = config_.vmStateBuilder;
         canMintBound.entrypoint = 0;
-        canMintBound.minFinalStackIndex = 1;
         emit Initialize(msg.sender, config_);
     }
 
@@ -85,9 +84,8 @@ contract Rain1155 is ERC1155Supply, RainVM {
         returns (bool)
     {
         bytes memory context_ = new bytes(0x20);
-        address sender = msg.sender;
         assembly {
-            mstore(add(context_, 0x20), sender)
+            mstore(add(context_, 0x20), account_)
         }
         State memory state_ = _loadState(assetId_);
         eval(context_, state_, canMintBound.entrypoint);
@@ -111,7 +109,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
         bounds_[0] = canMintBound;
         for (uint256 i = 0; i < config_.currencies.length; i++) {
             bounds_[i + 1].entrypoint = i + 1;
-            bounds_[i + 1].minFinalStackIndex = i + 2;
             priceEntryPoint[totalAssets][config_.currencies[i]] = i + 1;
         }
 
