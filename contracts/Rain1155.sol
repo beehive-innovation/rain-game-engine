@@ -30,8 +30,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
     address private immutable self;
     address private immutable vmStateBuilder;
 
-    Bounds private canMintBound;
-    mapping(uint256 => mapping(address => uint256)) private priceEntryPoint;
+    mapping(uint256 => mapping(address => uint256)) private paymentToken;
     mapping(uint256 => AssetDetails) public assets;
 
     struct AssetDetails {
@@ -58,7 +57,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
     constructor(Rain1155Config memory config_) ERC1155("") {
         self = address(this);
         vmStateBuilder = config_.vmStateBuilder;
-        canMintBound.entrypoint = 0;
         emit Initialize(msg.sender, config_);
     }
 
@@ -74,7 +72,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         view
         returns (uint256 entrtyPoint)
     {
-        entrtyPoint = priceEntryPoint[assetId_][paymentToken_];
+        entrtyPoint = paymentToken[assetId_][paymentToken_];
         require(entrtyPoint != 0, "Invalid payment token");
     }
 
@@ -88,7 +86,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
             mstore(add(context_, 0x20), account_)
         }
         State memory state_ = _loadState(assetId_);
-        eval(context_, state_, canMintBound.entrypoint);
+        eval(context_, state_, 0);
         return (state_.stack[state_.stackIndex - 1] == 1);
     }
 
@@ -105,11 +103,20 @@ contract Rain1155 is ERC1155Supply, RainVM {
 
     function createNewAsset(AssetConfig memory config_) external {
         totalAssets = totalAssets + 1;
-        Bounds[] memory bounds_ = new Bounds[](config_.currencies.length + 1);
+
+        Bounds memory canMintBound;
+        canMintBound.entrypoint = 0;
+
+        Bounds memory priceBound;
+        priceBound.entrypoint = 1;
+
+        Bounds[] memory bounds_ = new Bounds[](2);
+
         bounds_[0] = canMintBound;
+        bounds_[1] = priceBound;
+
         for (uint256 i = 0; i < config_.currencies.length; i++) {
-            bounds_[i + 1].entrypoint = i + 1;
-            priceEntryPoint[totalAssets][config_.currencies[i]] = i + 1;
+            paymentToken[totalAssets][config_.currencies[i]] = i + 1;
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
@@ -118,22 +125,22 @@ contract Rain1155 is ERC1155Supply, RainVM {
             bounds_
         );
 
-        assets[totalAssets] = AssetDetails(
-            config_.lootBoxId,
-            totalAssets,
-            config_.currencies,
-            config_.vmStateConfig,
-            SSTORE2.write(vmStateBytes_),
-            config_.recipient,
-            config_.tokenURI
-        );
+        // assets[totalAssets] = AssetDetails(
+        //     config_.lootBoxId,
+        //     totalAssets,
+        //     config_.currencies,
+        //     config_.vmStateConfig,
+        //     SSTORE2.write(vmStateBytes_),
+        //     config_.recipient,
+        //     config_.tokenURI
+        // );
 
-        emit AssetCreated(
-            totalAssets,
-            assets[totalAssets],
-            config_.name,
-            config_.description
-        );
+        // emit AssetCreated(
+        //     totalAssets,
+        //     assets[totalAssets],
+        //     config_.name,
+        //     config_.description
+        // );
     }
 
     function getAssetPrice(
@@ -146,7 +153,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
             mstore(add(context_, 0x20), units)
         }
         State memory state_ = _loadState(assetId);
-        eval(context_, state_, _priceEntryPoint(assetId, paymentToken));
+        eval(context_, state_, 0);
         stack = state_.stack;
     }
 
