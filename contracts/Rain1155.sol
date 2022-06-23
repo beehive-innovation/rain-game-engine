@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity =0.8.10;
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -30,7 +30,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
     address private immutable self;
     address private immutable vmStateBuilder;
 
-    mapping(uint256 => mapping(address => uint256)) private paymentToken;
+    mapping(uint256 => mapping(address => uint256)) private paymentTokenIndex;
     mapping(uint256 => AssetDetails) public assets;
 
     struct AssetDetails {
@@ -67,12 +67,12 @@ contract Rain1155 is ERC1155Supply, RainVM {
             );
     }
 
-    function _priceEntryPoint(uint256 assetId_, address paymentToken_)
+    function _paymentTokenIndex(uint256 assetId_, address paymentToken_)
         internal
         view
         returns (uint256 entrtyPoint)
     {
-        entrtyPoint = paymentToken[assetId_][paymentToken_];
+        entrtyPoint = paymentTokenIndex[assetId_][paymentToken_];
         require(entrtyPoint != 0, "Invalid payment token");
     }
 
@@ -116,7 +116,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         bounds_[1] = priceBound;
 
         for (uint256 i = 0; i < config_.currencies.length; i++) {
-            paymentToken[totalAssets][config_.currencies[i]] = i + 1;
+            paymentTokenIndex[totalAssets][config_.currencies[i]] = i + 1;
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
@@ -125,36 +125,59 @@ contract Rain1155 is ERC1155Supply, RainVM {
             bounds_
         );
 
-        // assets[totalAssets] = AssetDetails(
-        //     config_.lootBoxId,
-        //     totalAssets,
-        //     config_.currencies,
-        //     config_.vmStateConfig,
-        //     SSTORE2.write(vmStateBytes_),
-        //     config_.recipient,
-        //     config_.tokenURI
-        // );
+        assets[totalAssets] = AssetDetails(
+            config_.lootBoxId,
+            totalAssets,
+            config_.currencies,
+            config_.vmStateConfig,
+            SSTORE2.write(vmStateBytes_),
+            config_.recipient,
+            config_.tokenURI
+        );
 
-        // emit AssetCreated(
-        //     totalAssets,
-        //     assets[totalAssets],
-        //     config_.name,
-        //     config_.description
-        // );
+        emit AssetCreated(
+            totalAssets,
+            assets[totalAssets],
+            config_.name,
+            config_.description
+        );
     }
 
     function getAssetPrice(
         uint256 assetId,
         address paymentToken,
         uint256 units
-    ) public view returns (uint256[] memory stack) {
-        bytes memory context_ = new bytes(0x20);
-        assembly {
-            mstore(add(context_, 0x20), units)
-        }
+    ) public view returns (uint256[] memory) {
         State memory state_ = _loadState(assetId);
-        eval(context_, state_, 0);
-        stack = state_.stack;
+        eval("", state_, 1);
+        uint256[] memory stack = state_.stack;
+
+        uint256 stackPointer;
+        uint256 paymentTokenIndex_ = _paymentTokenIndex(assetId, paymentToken);
+
+        for (uint256 i = 0; i < paymentTokenIndex_ - 1; i++) {
+            if (stack[stackPointer] == 0) {
+                unchecked {
+                    stackPointer = stackPointer + 2;
+                }
+            } else if (stack[stackPointer] == 1) {
+                unchecked {
+                    stackPointer = stackPointer + 3;
+                }
+            }
+        }
+
+        uint256[] memory price = new uint256[](3);
+        if (stack[stackPointer] == 0) {
+            price[0] = stack[stackPointer];
+            price[1] = stack[stackPointer + 1] * units;
+        } else if (stack[stackPointer] == 1) {
+            price[0] = stack[stackPointer];
+            price[1] = stack[stackPointer + 1];
+            price[2] = stack[stackPointer + 2] * units;
+        }
+
+        return price;
     }
 
     function mintAssets(uint256 assetId_, uint256 units_) external {
