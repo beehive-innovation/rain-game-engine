@@ -150,7 +150,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         uint256 stackPointer;
         uint256 paymentTokenIndex_ = _paymentTokenIndex(assetId, paymentToken);
 
-        for (uint256 i = ; i < paymentTokenIndex_ - 1; i++) {
+        for (uint256 i = 1; i < paymentTokenIndex_ - 1; i++) {
             if (stack[stackPointer] == 0) {
                 unchecked {
                     stackPointer = stackPointer + 2;
