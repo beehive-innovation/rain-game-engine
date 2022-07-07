@@ -4,7 +4,6 @@ pragma solidity =0.8.10;
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
-import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
 import {AllStandardOps} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/VMStateBuilder.sol";
 
@@ -104,16 +103,12 @@ contract Rain1155 is ERC1155Supply, RainVM {
     function createNewAsset(AssetConfig memory config_) external {
         totalAssets = totalAssets + 1;
 
-        Bounds memory canMintBound;
-        canMintBound.entrypoint = 0;
-
-        Bounds memory priceBound;
-        priceBound.entrypoint = 1;
+        Bounds memory scriptBound;
+        scriptBound.entrypoint = 0;
 
         Bounds[] memory bounds_ = new Bounds[](2);
 
-        bounds_[0] = canMintBound;
-        bounds_[1] = priceBound;
+        bounds_[0] = scriptBound;
 
         for (uint256 i = 0; i < config_.currencies.length; i++) {
             paymentTokenIndex[totalAssets][config_.currencies[i]] = i + 1;
@@ -149,13 +144,13 @@ contract Rain1155 is ERC1155Supply, RainVM {
         uint256 units
     ) public view returns (uint256[] memory) {
         State memory state_ = _loadState(assetId);
-        eval("", state_, 1);
+        eval("", state_, 0);
         uint256[] memory stack = state_.stack;
 
         uint256 stackPointer;
         uint256 paymentTokenIndex_ = _paymentTokenIndex(assetId, paymentToken);
 
-        for (uint256 i = 0; i < paymentTokenIndex_ - 1; i++) {
+        for (uint256 i = ; i < paymentTokenIndex_ - 1; i++) {
             if (stack[stackPointer] == 0) {
                 unchecked {
                     stackPointer = stackPointer + 2;

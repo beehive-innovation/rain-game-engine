@@ -1,9 +1,5 @@
-import { artifacts, ethers } from "hardhat";
-import { Contract } from "ethers";
-import { eighteenZeros, fetchFile, getEventArgs, writeFile } from "../test/utils"
-
-import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
-import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import { ethers } from "hardhat";
+import { eighteenZeros, fetchFile, writeFile } from "../test/utils"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import path from "path";
 
@@ -45,28 +41,6 @@ async function main() {
   const rTKN = await Erc20.deploy("Rain Token", "rTKN");
   await rTKN.deployed()
 
-  const erc20BalanceTierFactoryFactory = await ethers.getContractFactory("ERC20BalanceTierFactory");
-  const erc20BalanceTierFactory = (await erc20BalanceTierFactoryFactory.deploy()) as ERC20BalanceTierFactory & Contract;
-  await erc20BalanceTierFactory.deployed()
-
-  const tx = await erc20BalanceTierFactory.createChildTyped({
-    erc20: rTKN.address,
-    tierValues: LEVELS
-  });
-
-  const erc20BalanceTier = new ethers.Contract(
-    ethers.utils.hexZeroPad(
-      ethers.utils.hexStripZeros(
-        (await getEventArgs(tx, "NewChild", erc20BalanceTierFactory)).child
-      ),
-      20
-    ),
-    (await artifacts.readArtifact("ERC20BalanceTier")).abi,
-    owner
-  ) as ERC20BalanceTier & Contract;
-
-  await erc20BalanceTier.deployed();
-
   const pathExampleConfig = path.resolve(__dirname, "../config/TestContracts.json");
   const config = JSON.parse(fetchFile(pathExampleConfig));
 
@@ -83,9 +57,6 @@ async function main() {
   config.SHIPS_ERC1155 = SHIPS.address;
 
   config.BAYC_ERC721 = BAYC.address;
-
-  config.erc20BalanceTier = erc20BalanceTier.address;
-
 
   console.log("Config : ", JSON.stringify(config, null, 2));
   const pathConfigLocal = path.resolve(__dirname, "../config/TestContracts.json");

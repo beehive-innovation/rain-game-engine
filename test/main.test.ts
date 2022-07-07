@@ -3,17 +3,14 @@ const { artifacts ,ethers, } = require("hardhat");
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { it } from "mocha";
-import type { Rain1155, AssetConfigStruct } from "../typechain/Rain1155";
+import type { Rain1155, AssetConfigStruct, Rain1155ConfigStruct } from "../typechain/Rain1155";
 import type { Token } from "../typechain/Token";
 import type { ReserveToken } from "../typechain/ReserveToken";
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155";
 import type { ReserveTokenERC721 } from "../typechain/ReserveTokenERC721";
-import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
-import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 import { Rain1155 as Rain1155SDK, Type, Conditions, condition, price} from "rain-game-sdk";
 
 import { eighteenZeros, getEventArgs, fetchFile, writeFile,  exec } from "./utils"
-import { Contract } from "ethers";
 import path from "path";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
@@ -37,8 +34,6 @@ export let CARS: ReserveTokenERC1155
 export let PLANES: ReserveTokenERC1155
 export let SHIPS: ReserveTokenERC1155
 
-export let erc20BalanceTier: ERC20BalanceTier
-
 export let owner: SignerWithAddress,
   creator: SignerWithAddress,
   creator2: SignerWithAddress,
@@ -60,10 +55,18 @@ before("Deploy Rain1155 Contract and subgraph", async function () {
   gameAsstesOwner = signers[5];
   admin = signers[6];
 
-
-  let Rain1155 = await ethers.getContractFactory("Rain1155")
+  const StateBuilder = await ethers.getContractFactory("AllStandardOpsStateBuilder");
   
-  rain1155 = await Rain1155.deploy()
+  let stateBuilder = await StateBuilder.deploy();
+  await stateBuilder.deployed();
+
+  const rain1155Config: Rain1155ConfigStruct = {
+    vmStateBuilder: stateBuilder.address
+  }
+
+  const Rain1155 = await ethers.getContractFactory("Rain1155")
+  
+  rain1155 = await Rain1155.deploy(rain1155Config)
 
   await rain1155.deployed();
 
@@ -94,29 +97,7 @@ before("Deploy Rain1155 Contract and subgraph", async function () {
   await SHIPS.deployed();
 
   rTKN = await Erc20.deploy("Rain Token", "rTKN");
-  await rTKN.deployed()
-
-  const erc20BalanceTierFactoryFactory = await ethers.getContractFactory("ERC20BalanceTierFactory");
-  const erc20BalanceTierFactory = (await erc20BalanceTierFactoryFactory.deploy()) as ERC20BalanceTierFactory & Contract;
-  await erc20BalanceTierFactory.deployed()
-
-  const tx = await erc20BalanceTierFactory.createChildTyped({
-    erc20: rTKN.address,
-    tierValues: LEVELS
-  });
-
-  erc20BalanceTier = new ethers.Contract(
-    ethers.utils.hexZeroPad(
-      ethers.utils.hexStripZeros(
-        (await getEventArgs(tx, "NewChild", erc20BalanceTierFactory)).child
-      ),
-      20
-    ),
-    (await artifacts.readArtifact("ERC20BalanceTier")).abi,
-    owner
-  ) as ERC20BalanceTier & Contract;
-
-  await erc20BalanceTier.deployed();
+  await rTKN.deployed();
 
   const pathExampleConfig = path.resolve(__dirname, "../config/localhost.json");
   const config = JSON.parse(fetchFile(pathExampleConfig));
@@ -191,10 +172,6 @@ describe("Rain1155 Test", function () {
       },
     ] ;
 
-    const [priceConfig, currencies] = rain1155SDK.generatePriceScript(prices);
-    console.log(currencies)
-
-    const tierCondition = 4
     const blockCondition = 15
 
     const conditions: condition[] = [
@@ -204,11 +181,6 @@ describe("Rain1155 Test", function () {
       {
         type: Conditions.BLOCK_NUMBER,
         blockNumber: blockCondition
-      },
-      {
-        type: Conditions.BALANCE_TIER,
-        tierAddress: erc20BalanceTier.address,
-        tierCondition: tierCondition
       },
       {
         type: Conditions.ERC20BALANCE,
@@ -228,7 +200,7 @@ describe("Rain1155 Test", function () {
       }
     ];
 
-    const canMintConfig = rain1155SDK.generateCanMintScript(conditions);
+    const [ vmStateConfig, currencies ] = Rain1155SDK.generateScript([ conditions], prices);
 
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,

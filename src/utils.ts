@@ -20,6 +20,10 @@ export function getERCType(address: Bytes): ERCType {
     let Contract = Rain1155.bind(Address.fromBytes(address));
     let erc721InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0x80ac58cd'))
     let erc1155InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0xd9b67a26'))
+    let erc20 = ERC20.bind(Address.fromBytes(address));
+    let name = erc20.try_name()
+    let symbol =  erc20.try_symbol()
+    let decimals =  erc20.try_decimals()
     if(!erc721InterfaceId.reverted){
         if(erc721InterfaceId.value == true){
             return ERCType.ERC721;
@@ -31,10 +35,6 @@ export function getERCType(address: Bytes): ERCType {
         }
     }
 
-    let erc20 = ERC20.bind(Address.fromBytes(address));
-    let name = erc20.try_name()
-    let symbol =  erc20.try_symbol()
-    let decimals =  erc20.try_decimals()
     if(!name.reverted && !symbol.reverted && !decimals.reverted){
         return ERCType.ERC20;
     }

@@ -1,5 +1,5 @@
 {
-    "include": ["./test", "./sctipts","src"],
+    "include": ["./test", "./scripts", "src"],
     "exclude": ["node_modules/*", "@graphprotocol/graph-ts/types/tsconfig.base.json"],
     "compilerOptions": {
       "target": "ES2020",
@@ -8,4 +8,4 @@
     },
     "files": ["./hardhat.config.ts"]
 }
-  
+

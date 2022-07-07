@@ -1,5 +1,6 @@
 {
   "network": "mumbai",
-  "rain1155": "0x1bfb7231b152d9db6cc87c7933b5dea765e51dd3",
-  "rain1155Block": 26225125
+  "rain1155": "0x8C403287691f932B278F84AED2CCB0aA8C4075e2",
+  "rain1155Block": 26902845,
+  "vmStateBuilder": "0x9672A83b2E5525DC14066d39caed7cE1CB41B640"
 }
