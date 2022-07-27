@@ -162,7 +162,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         eval(abi.encodePacked(context_), state_, 0);
         uint256[] memory stack = state_.stack;
 
-        uint256 maxUnits;
+        uint256 maxUnits = stack[stack.length - 2];
         uint256 stackPointer = stack.length - 1;
         uint256[] memory prices = new uint256[](assets[assetId_].currencies.length);
         
@@ -170,7 +170,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
             unchecked {
                 uint256 count = assets[assetId_].currencies.length - (i + 1);
                 prices[count] = stack[stackPointer];
-                maxUnits = maxUnits.max(stack[stackPointer - 1]);
+                maxUnits = maxUnits.min(stack[stackPointer - 1]);
                 stackPointer -= 2;
             }
         }
