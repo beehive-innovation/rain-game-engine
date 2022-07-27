@@ -1,11 +1,13 @@
 //SPDX-License-Identifier: MIT
-pragma solidity =0.8.10;
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/RainVM.sol";
+import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol";
 import {AllStandardOps} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/VMStateBuilder.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 struct Rain1155Config {
     address vmStateBuilder;
@@ -17,19 +19,21 @@ struct AssetConfig {
     uint256 lootBoxId;
     StateConfig vmStateConfig;
     address[] currencies;
+    uint256[] currencyTypes;
     address recipient;
     string tokenURI;
 }
 
 contract Rain1155 is ERC1155Supply, RainVM {
     using Strings for uint256;
+    using Math for uint256;
 
     uint256 public totalAssets;
 
     address private immutable self;
     address private immutable vmStateBuilder;
 
-    mapping(uint256 => mapping(address => uint256)) private paymentTokenIndex;
+    mapping(uint256 => mapping(address => uint256)) private paymentToken;
     mapping(uint256 => AssetDetails) public assets;
 
     struct AssetDetails {
@@ -40,6 +44,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         address vmStatePointer;
         address recipient;
         string tokenURI;
+        uint256[] currencyTypes;
     }
 
     // EVENTS
@@ -66,27 +71,23 @@ contract Rain1155 is ERC1155Supply, RainVM {
             );
     }
 
-    function _paymentTokenIndex(uint256 assetId_, address paymentToken_)
+    function _priceEntryPoint(uint256 assetId_, address paymentToken_)
         internal
         view
         returns (uint256 entrtyPoint)
     {
-        entrtyPoint = paymentTokenIndex[assetId_][paymentToken_];
-        require(entrtyPoint != 0, "Invalid payment token");
+        entrtyPoint = paymentToken[assetId_][paymentToken_];
+        require(entrtyPoint < assets[assetId_].currencies.length, "Invalid payment token");
     }
 
-    function canMint(uint256 assetId_, address account_)
+    function getAssetMaxUnits(uint256 assetId_, address account_, uint256 units_)
         public
         view
-        returns (bool)
-    {
-        bytes memory context_ = new bytes(0x20);
-        assembly {
-            mstore(add(context_, 0x20), account_)
-        }
-        State memory state_ = _loadState(assetId_);
-        eval(context_, state_, 0);
-        return (state_.stack[state_.stackIndex - 1] == 1);
+        returns (uint256)
+    {   
+        (uint256 maxUnits_,) = getAssetCost(assetId_, account_, units_);
+
+        return maxUnits_;
     }
 
     function uri(uint256 _tokenId)
@@ -103,15 +104,14 @@ contract Rain1155 is ERC1155Supply, RainVM {
     function createNewAsset(AssetConfig memory config_) external {
         totalAssets = totalAssets + 1;
 
-        Bounds memory scriptBound;
-        scriptBound.entrypoint = 0;
+        Bounds memory costBound;
+        costBound.entrypoint = 0;
 
-        Bounds[] memory bounds_ = new Bounds[](2);
-
-        bounds_[0] = scriptBound;
+        Bounds[] memory bounds_ = new Bounds[](1);
+        bounds_[0] = costBound;
 
         for (uint256 i = 0; i < config_.currencies.length; i++) {
-            paymentTokenIndex[totalAssets][config_.currencies[i]] = i + 1;
+            paymentToken[totalAssets][config_.currencies[i]] = i;
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
@@ -123,11 +123,12 @@ contract Rain1155 is ERC1155Supply, RainVM {
         assets[totalAssets] = AssetDetails(
             config_.lootBoxId,
             totalAssets,
-            config_.currencies,
+            config_.currencies,   
             config_.vmStateConfig,
             SSTORE2.write(vmStateBytes_),
             config_.recipient,
-            config_.tokenURI
+            config_.tokenURI,
+            config_.currencyTypes
         );
 
         emit AssetCreated(
@@ -138,70 +139,71 @@ contract Rain1155 is ERC1155Supply, RainVM {
         );
     }
 
-    function getAssetPrice(
-        uint256 assetId,
-        address paymentToken,
-        uint256 units
-    ) public view returns (uint256[] memory) {
-        State memory state_ = _loadState(assetId);
-        eval("", state_, 0);
+    function getCurrencyPrice(
+        uint256 assetId_,
+        address paymentToken_,
+        address account_,
+        uint256 units_
+    ) public view returns (uint256) {
+        (, uint256[] memory prices_) = getAssetCost(assetId_, account_, units_);
+
+        return prices_[_priceEntryPoint(assetId_, paymentToken_)];
+    }
+
+    function getAssetCost(
+        uint256 assetId_,
+        address account_,
+        uint256 units_
+    ) public view returns (uint256, uint256[] memory) {
+        uint256[2] memory context_;
+        context_[0] = uint256(uint160(account_));
+        context_[1] = units_;
+        State memory state_ = _loadState(assetId_);
+        eval(abi.encodePacked(context_), state_, 0);
         uint256[] memory stack = state_.stack;
 
-        uint256 stackPointer;
-        uint256 paymentTokenIndex_ = _paymentTokenIndex(assetId, paymentToken);
-
-        for (uint256 i = 1; i < paymentTokenIndex_ - 1; i++) {
-            if (stack[stackPointer] == 0) {
-                unchecked {
-                    stackPointer = stackPointer + 2;
-                }
-            } else if (stack[stackPointer] == 1) {
-                unchecked {
-                    stackPointer = stackPointer + 3;
-                }
+        uint256 maxUnits;
+        uint256 stackPointer = stack.length - 1;
+        uint256[] memory prices = new uint256[](assets[assetId_].currencies.length);
+        
+        for (uint256 i = 0; i < assets[assetId_].currencies.length; i++) {
+            unchecked {
+                uint256 count = assets[assetId_].currencies.length - (i + 1);
+                prices[count] = stack[stackPointer];
+                maxUnits = maxUnits.max(stack[stackPointer - 1]);
+                stackPointer -= 2;
             }
         }
-
-        uint256[] memory price = new uint256[](3);
-        if (stack[stackPointer] == 0) {
-            price[0] = stack[stackPointer];
-            price[1] = stack[stackPointer + 1] * units;
-        } else if (stack[stackPointer] == 1) {
-            price[0] = stack[stackPointer];
-            price[1] = stack[stackPointer + 1];
-            price[2] = stack[stackPointer + 2] * units;
-        }
-
-        return price;
+        return (maxUnits, prices);
     }
 
     function mintAssets(uint256 assetId_, uint256 units_) external {
         require(assetId_ <= totalAssets, "Invalid AssetId");
-        require(canMint(assetId_, msg.sender), "Cant Mint");
-        for (uint256 i = 0; i < assets[assetId_].currencies.length; i = i + 1) {
-            uint256[] memory stack_ = getAssetPrice(
-                assetId_,
-                assets[assetId_].currencies[i],
-                units_
-            );
-            // console.log(stack[0], stack[1], stack[2]);
-            if (stack_[0] == 0) {
+
+        (uint256 maxUnits_, uint256[] memory prices_)= getAssetCost(assetId_, msg.sender, units_);
+        require(maxUnits_ > 0, "Cant Mint");
+        maxUnits_ = maxUnits_.min(units_);
+
+        uint256 count;
+        for (uint256 i = 0; i < assets[assetId_].currencies.length; i++) {
+            if (assets[assetId_].currencyTypes[count] == 0) {
                 ITransfer(assets[assetId_].currencies[i]).transferFrom(
                     msg.sender,
                     assets[assetId_].recipient,
-                    stack_[1]
+                    prices_[i] * maxUnits_
                 );
-            } else if (stack_[0] == 1) {
+            } else if (assets[assetId_].currencyTypes[count] == 1) {
                 ITransfer(assets[assetId_].currencies[i]).safeTransferFrom(
                     msg.sender,
                     assets[assetId_].recipient,
-                    stack_[1],
-                    stack_[2],
+                    assets[assetId_].currencyTypes[++count],
+                    prices_[i] * maxUnits_,
                     ""
                 );
             }
+            count++;
         }
-        _mint(msg.sender, assetId_, units_, "");
+        _mint(msg.sender, assetId_, maxUnits_, "");
     }
 
     function fnPtrs() public pure override returns (bytes memory) {
@@ -224,3 +226,4 @@ interface ITransfer {
         uint256 amount
     ) external returns (bool);
 }
+

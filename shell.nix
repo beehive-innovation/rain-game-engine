@@ -195,6 +195,6 @@ pkgs.stdenv.mkDerivation {
   shellHook = ''
     export PATH=$( npm bin ):$PATH
     # keep it fresh
-    npm install
+    yarn install
   '';
 }

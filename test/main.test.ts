@@ -8,9 +8,9 @@ import type { Token } from "../typechain/Token";
 import type { ReserveToken } from "../typechain/ReserveToken";
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155";
 import type { ReserveTokenERC721 } from "../typechain/ReserveTokenERC721";
-import { Rain1155 as Rain1155SDK, Type, Conditions, condition, price} from "rain-game-sdk";
+import { Rain1155 as Rain1155SDK, Type, Conditions, condition, price, AllStandardOps} from "rain-game-sdk";
 
-import { eighteenZeros, getEventArgs, fetchFile, writeFile,  exec } from "./utils"
+import { eighteenZeros, getEventArgs, fetchFile, writeFile,  exec, concat, op } from "./utils"
 import path from "path";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
@@ -200,12 +200,32 @@ describe("Rain1155 Test", function () {
       }
     ];
 
-    const [ vmStateConfig, currencies ] = Rain1155SDK.generateScript([ conditions], prices);
+    const vmStateConfig = {
+      constants: [10, ethers.BigNumber.from("1" + eighteenZeros), 10, ethers.BigNumber.from("25" + eighteenZeros), 9, 10, 9, 5],
+      sources: [
+        concat([
+          op(AllStandardOps.CONSTANT, 0),
+          op(AllStandardOps.CONSTANT, 1),
+
+          op(AllStandardOps.CONSTANT, 2),
+          op(AllStandardOps.CONSTANT, 3),
+
+          op(AllStandardOps.CONSTANT, 4),
+          op(AllStandardOps.CONSTANT, 5),
+
+          op(AllStandardOps.CONSTANT, 6),
+          op(AllStandardOps.CONSTANT, 7),
+        ])
+      ]
+    }
+
+    //const [ vmStateConfig, currencies ] = Rain1155SDK.generateScript([ conditions], prices);
 
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,
-      vmStateConfig: vmStateConfig,
-      currencies: currencies,
+      vmStateConfig,
+      currencies: [USDT.address, BNB.address, CARS.address, PLANES.address],
+      currencyTypes: [0, 0, 1, 5, 1, 15],
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
       recipient: creator.address,
@@ -241,8 +261,8 @@ describe("Rain1155 Test", function () {
 
     await BAYC.connect(buyer1).mintNewToken();
 
-    let USDTPrice = (await rain1155.getAssetPrice(1, USDT.address, 1))[1]
-    let BNBPrice = (await rain1155.getAssetPrice(1, BNB.address, 1))[1]
+    let USDTPrice = (await rain1155.getCurrencyPrice(1, USDT.address, buyer1.address, 1))
+    let BNBPrice = (await rain1155.getCurrencyPrice(1, BNB.address, buyer1.address, 1))
 
     await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
     await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);

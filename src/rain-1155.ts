@@ -1,5 +1,5 @@
 import { ipfs } from "@graphprotocol/graph-ts";
-import { Asset, AssetsOwned, Holder, Rain1155, VmStateConfig } from "../generated/schema";
+import { Asset, AssetsOwned, Holder, Rain1155 } from "../generated/schema";
 import {
   ApprovalForAll,
   AssetCreated,
@@ -36,21 +36,26 @@ export function handleAssetCreated(event: AssetCreated): void {
     // ----------------------------------------- </Fetch  data from IPFS>
 
     let _currencies = event.params.asset_.currencies;
+    let _types = event.params.asset_.currencyTypes;
     let currencies: string[] = [];
+    let tokenId;
+    let count = 0;
 
     for (let i = 0; i < _currencies.length; i++) {
-        let currency = getCurrency(_currencies[i], getERCType(_currencies[i]), event.params.asset_.vmStateConfig.constants, i);
+        tokenId = _types[count] === ZERO_BI ? undefined : _types[++count]
+        let currency = getCurrency(_currencies[i], getERCType(_currencies[i]), tokenId);
         if (currencies) currencies.push(currency.id);
+        count++;
     }
 
     asset.currencies = currencies;
 
-    let vmStateConfig = new VmStateConfig(event.address.toHex() + "-" + event.params.assetId_.toString())
-    vmStateConfig.constants = event.params.asset_.vmStateConfig.constants;
-    vmStateConfig.sources = event.params.asset_.vmStateConfig.sources;
-    vmStateConfig.save();
+    // let vmStateConfig = new VmStateConfig(event.address.toHex() + "-" + event.params.assetId_.toString())
+    // vmStateConfig.constants = event.params.asset_.vmStateConfig.constants;
+    // vmStateConfig.sources = event.params.asset_.vmStateConfig.sources;
+    // vmStateConfig.save();
 
-    asset.vmStateConfig = vmStateConfig.id;
+    // asset.vmStateConfig = vmStateConfig.id;
 
     asset.save()
 
@@ -68,7 +73,7 @@ export function handleAssetCreated(event: AssetCreated): void {
 
 export function handleInitialize(event: Initialize): void {
   let rain1155 = new Rain1155(event.address.toHex());
-    rain1155.vmStateBuilder = event.params.config_.vmStateBuilder;
+    //rain1155.vmStateBuilder = event.params.config_.vmStateBuilder;
     rain1155.deployBlock = event.block.number;
     rain1155.deployTimestamp = event.block.timestamp;
     rain1155.totalAssets = ZERO_BI;

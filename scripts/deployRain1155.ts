@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import path from "path";
-import { VmStateConfig } from "../generated/schema";
+//import { VmStateConfig } from "../generated/schema";
 import { fetchFile, writeFile} from "../test/utils";
 import { Rain1155ConfigStruct } from "../typechain/Rain1155";
 

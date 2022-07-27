@@ -17,6 +17,7 @@
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/blocks --version-label 1",
+    "m1-graph-node": "docker-compose -f \"graph-node/docker/docker-compose.yml\" up",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
     "deploy:mumbai": "npm run prepare:mumbai && npm run codegen && npm run deploy",

@@ -1,8 +1,6 @@
 type Rain1155 @entity {
   "Rain1155 address"
   id: ID!#{Rain1155.address}
-  "VMStateBuilder address"
-  vmStateBuilder: Bytes!
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
   "List of Assets"
@@ -28,10 +26,12 @@ type Asset @entity {
   recipient: Bytes! # event.params._asset.creator
   "Id of LootBox that contains this asset"
   lootBoxID: BigInt! # event.params._asset.lootBoxId
-  "Script for camint and price"
-  vmStateConfig: VmStateConfig! 
-  "List of ERC20 and ERC1155 tokens used for payment"
-  currencies: [Currency!] # event.params._asset.currencies
+  "Script for price"
+  # priceConfig: PriceConfig! # event.params._asset._priceConfig
+  # "Script for mintConditions"
+  # canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
+  # "List of ERC20 and ERC1155 tokens used for payment"
+  currencies: [Currency!]! # event.params._asset.currencies
   "Block number at which Rain1155 contract deployed"
   creationBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
@@ -42,15 +42,33 @@ type Asset @entity {
   metadata: String!
 }
 
-# create from AssetCreated event
-type VmStateConfig @entity {
-  #{Rain1155.address}-{event.params._asset._assetId}
-  id: ID!
-  # event.params._asset._priceConfig.sources
-  sources: [Bytes!]!
-  # event.params._asset._priceConfig.constants
-  constants: [BigInt!]!
-}
+# # create from AssetCreated event
+# type PriceConfig @entity {
+#   #{Rain1155.address}-{event.params._asset._assetId}
+#   id: ID!
+#   # event.params._asset._priceConfig.sources
+#   sources: [Bytes!]!
+#   # event.params._asset._priceConfig.constants
+#   constants: [BigInt!]!
+#   # event.params._asset._priceConfig.stackLength
+#   stackLength: BigInt!
+#   # event.params._asset._priceConfig.argumentsLength
+#   argumentsLength: BigInt!
+# }
+
+# # create from AssetCreated event
+# type CanMintConfig @entity {
+#   #{Rain1155.address}-{event.params._asset._assetId}
+#   id: ID!
+#   # event.params._asset._priceConfig.sources
+#   sources: [Bytes!]!
+#   # event.params._asset._priceConfig.constants
+#   constants: [BigInt!]!
+#   # event.params._asset._priceConfig.stackLength
+#   stackLength: BigInt!
+#   # event.params._asset._priceConfig.argumentsLength
+#   argumentsLength: BigInt!
+# }
 
 # Create on every TransferSingle or TransferBatch event
 type Holder @entity {
