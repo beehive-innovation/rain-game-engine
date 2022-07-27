@@ -36,10 +36,10 @@ type Asset @entity {
   creationBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
-  "TokenURI of Asset"
-  tokenURI: String! # event.params._asset.tokenURI
-  "Asset Metadata"
-  metadata: String!
+  # "TokenURI of Asset"
+  # tokenURI: String! # event.params._asset.tokenURI
+  # "Asset Metadata"
+  # metadata: String!
 }
 
 # # create from AssetCreated event
@@ -98,5 +98,4 @@ type Currency @entity {
   symbol: String
   decimals: Int
   tokenId: BigInt
-  tokenURI: String
 }

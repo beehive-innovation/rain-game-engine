@@ -1,12 +1,11 @@
-import { ipfs } from "@graphprotocol/graph-ts";
+import { ipfs, BigInt } from "@graphprotocol/graph-ts";
 import { Asset, AssetsOwned, Holder, Rain1155 } from "../generated/schema";
 import {
   ApprovalForAll,
   AssetCreated,
   Initialize,
   TransferBatch,
-  TransferSingle,
-  URI
+  TransferSingle
 } from "../generated/Rain1155/Rain1155"
 import { getCurrency, getERCType, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
@@ -21,28 +20,28 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.recipient = event.params.asset_.recipient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
-    asset.tokenURI = event.params.asset_.tokenURI;
+    // asset.tokenURI = event.params.asset_.tokenURI;
 
     // ----------------------------------------- <Fetch  data from IPFS>
-    let ipfsHash = event.params.asset_.tokenURI.split('/').pop()!;
-    let ipfsMetadata = ipfs.cat(ipfsHash);
-    if (ipfsMetadata) {
-        //  Add JSON object as a string
-        asset.metadata = ipfsMetadata.toString();
-    }else
-    {        
-        asset.metadata = "";
-    }
+    // let ipfsHash = event.params.asset_.tokenURI.split('/').pop()!;
+    // let ipfsMetadata = ipfs.cat(ipfsHash);
+    // if (ipfsMetadata) {
+    //     //  Add JSON object as a string
+    //     asset.metadata = ipfsMetadata.toString();
+    // }else
+    // {        
+    //     asset.metadata = "";
+    // }
     // ----------------------------------------- </Fetch  data from IPFS>
 
     let _currencies = event.params.asset_.currencies;
     let _types = event.params.asset_.currencyTypes;
     let currencies: string[] = [];
-    let tokenId;
+    let tokenId: BigInt;
     let count = 0;
 
     for (let i = 0; i < _currencies.length; i++) {
-        tokenId = _types[count] === ZERO_BI ? undefined : _types[++count]
+        tokenId = _types[count] === ZERO_BI ? ZERO_BI : _types[++count]
         let currency = getCurrency(_currencies[i], getERCType(_currencies[i]), tokenId);
         if (currencies) currencies.push(currency.id);
         count++;
@@ -178,5 +177,5 @@ export function handleTransferSingle(event: TransferSingle): void {
       rain1155.save();
   }
 }
-export function handleURI(event: URI): void {
-}
+// export function handleURI(event: URI): void {
+// }

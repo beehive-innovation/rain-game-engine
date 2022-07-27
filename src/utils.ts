@@ -17,7 +17,6 @@ export enum ERCType{
     ERC1155
 }
 export function getERCType(address: Bytes): ERCType {
-    address = Bytes.fromUint8Array(address.subarray(12));
     let Contract = Rain1155.bind(Address.fromBytes(address));
     let erc721InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0x80ac58cd'))
     let erc1155InterfaceId = Contract.try_supportsInterface(Bytes.fromHexString('0xd9b67a26'))
@@ -43,7 +42,7 @@ export function getERCType(address: Bytes): ERCType {
 }
 
 
-export function getCurrency(address: Bytes, type: ERCType, tokenId: BigInt | undefined): Currency{
+export function getCurrency(address: Bytes, type: ERCType, tokenId: BigInt): Currency{
     let currency = Currency.load(address.toHex());
     if(!currency){
         currency = new Currency(address.toHex());
@@ -70,11 +69,13 @@ export function getCurrency(address: Bytes, type: ERCType, tokenId: BigInt | und
             //     else if(constants[i].equals(ONE_BI)) i+=3
             //     index--;
             // }
+            if (tokenId.equals(ZERO_BI)){
             log.info("TokenID : {}", [tokenId.toString()])
-            let uri = erc1155.try_uri(tokenId);
-            if(!uri.reverted) currency.tokenURI = uri.value;
-            else currency.tokenURI = `TokenId ${tokenId} may not exists now`;
+            // let uri = erc1155.try_uri(tokenId);
+            // if(!uri.reverted) currency.tokenURI = uri.value;
+            // else currency.tokenURI = `TokenId ${tokenId} may not exists now`;
             currency.tokenId = tokenId;
+            }
             currency.save();
         }else{
             currency.type = "UNKNOWN";

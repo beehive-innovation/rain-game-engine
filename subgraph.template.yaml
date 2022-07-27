@@ -1,8 +1,6 @@
 specVersion: 0.0.4
 schema:
   file: ./schema.graphql
-features:
-  - ipfsOnEthereumContracts
 dataSources:
   - kind: ethereum
     name: Rain1155
@@ -21,7 +19,6 @@ dataSources:
         - Initialize
         - TransferBatch
         - TransferSingle
-        - URI
       abis:
         - name: Rain1155
           file: ./abis/Rain1155.json
@@ -40,6 +37,4 @@ dataSources:
           handler: handleTransferBatch
         - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleTransferSingle
-        - event: URI(string,indexed uint256)
-          handler: handleURI
       file: ./src/rain-1155.ts
