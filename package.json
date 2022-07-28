@@ -72,7 +72,6 @@
     "dotenv": "^16.0.0",
     "gluegun": "^5.1.2",
     "mustache": "^4.2.0",
-    "rain-game-sdk": "2.0.0-beta",
     "rain-sdk": "2.0.0"
   }
 }

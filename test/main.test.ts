@@ -8,18 +8,16 @@ import type { Token } from "../typechain/Token";
 import type { ReserveToken } from "../typechain/ReserveToken";
 import type { ReserveTokenERC1155 } from "../typechain/ReserveTokenERC1155";
 import type { ReserveTokenERC721 } from "../typechain/ReserveTokenERC721";
-import { Rain1155 as Rain1155SDK, Type, Conditions, condition, price, AllStandardOps} from "rain-game-sdk";
 
 import { eighteenZeros, getEventArgs, fetchFile, writeFile,  exec, concat, op } from "./utils"
 import path from "path";
+import { AllStandardOps } from "rain-sdk";
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros)
 ); // [1,2,3,4,5,6,7,8]
 
 export let rain1155: Rain1155
-
-export let rain1155SDK: Rain1155SDK
 
 export let USDT: ReserveToken
 
@@ -69,8 +67,6 @@ before("Deploy Rain1155 Contract and subgraph", async function () {
   rain1155 = await Rain1155.deploy(rain1155Config)
 
   await rain1155.deployed();
-
-  rain1155SDK = new Rain1155SDK(rain1155.address, owner);
 
   const Erc20 = await ethers.getContractFactory("Token");
   const stableCoins = await ethers.getContractFactory("ReserveToken");
@@ -139,66 +135,8 @@ describe("Rain1155 Test", function () {
     await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
 
 
-    const prices: price[] = [
-      {
-        currency:{
-          type: Type.ERC20,
-          address: USDT.address,
-        },
-        amount: ethers.BigNumber.from("1" + eighteenZeros)
-      },
-      {
-        currency:{
-          type: Type.ERC20,
-          address: BNB.address,
-        },
-        amount: ethers.BigNumber.from("25" + eighteenZeros)
-      },
-      {
-        currency:{
-          type: Type.ERC1155,
-          address: CARS.address,
-          tokenId: 5,
-        },
-        amount: ethers.BigNumber.from("10")
-      },
-      {
-        currency:{
-          type: Type.ERC1155,
-          address: PLANES.address,
-          tokenId: 15,
-        },
-        amount: ethers.BigNumber.from("5")
-      },
-    ] ;
 
     const blockCondition = 15
-
-    const conditions: condition[] = [
-      {
-        type: Conditions.NONE
-      },
-      {
-        type: Conditions.BLOCK_NUMBER,
-        blockNumber: blockCondition
-      },
-      {
-        type: Conditions.ERC20BALANCE,
-        address: SOL.address,
-        balance: ethers.BigNumber.from("10" + eighteenZeros)
-      },
-      {
-        type: Conditions.ERC721BALANCE,
-        address: BAYC.address,
-        balance: ethers.BigNumber.from("0")
-      },
-      {
-        type: Conditions.ERC1155BALANCE,
-        address: SHIPS.address,
-        id: ethers.BigNumber.from("1"),
-        balance: ethers.BigNumber.from("10")
-      }
-    ];
 
     const vmStateConfig = {
       constants: [10, ethers.BigNumber.from("1" + eighteenZeros), 10, ethers.BigNumber.from("25" + eighteenZeros), 9, 10, 9, 5],
