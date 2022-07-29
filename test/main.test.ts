@@ -162,8 +162,11 @@ describe("Rain1155 Test", function () {
     const assetConfig: AssetConfigStruct = {
       lootBoxId: 0,
       vmStateConfig,
-      currencies: [USDT.address, BNB.address, CARS.address, PLANES.address],
-      currencyTypes: [0, 0, 1, 5, 1, 15],
+      currencies: {
+        token: [USDT.address, BNB.address, CARS.address, PLANES.address],
+        tokenType: [0, 0, 1, 1],
+        tokenId: [0, 0, 5, 15]
+      },
       name: "F1",
       description: "BRUUUUMMM BRUUUMMM",
       recipient: creator.address,
@@ -199,8 +202,8 @@ describe("Rain1155 Test", function () {
 
     await BAYC.connect(buyer1).mintNewToken();
 
-    let USDTPrice = (await rain1155.getCurrencyPrice(1, USDT.address, buyer1.address, 1))
-    let BNBPrice = (await rain1155.getCurrencyPrice(1, BNB.address, buyer1.address, 1))
+    let USDTPrice = (await rain1155.getCurrencyPrice(1, USDT.address, buyer1.address, 1))[0]
+    let BNBPrice = (await rain1155.getCurrencyPrice(1, BNB.address, buyer1.address, 1))[0]
 
     await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
     await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);

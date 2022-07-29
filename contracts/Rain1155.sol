@@ -13,13 +13,18 @@ struct Rain1155Config {
     address vmStateBuilder;
 }
 
+struct CurrencyConfig {
+    address[] token;
+    uint256[] tokenType;
+    uint256[] tokenId;
+}
+
 struct AssetConfig {
     string name;
     string description;
     uint256 lootBoxId;
     StateConfig vmStateConfig;
-    address[] currencies;
-    uint256[] currencyTypes;
+    CurrencyConfig currencies;
     address recipient;
     string tokenURI;
 }
@@ -39,12 +44,11 @@ contract Rain1155 is ERC1155Supply, RainVM {
     struct AssetDetails {
         uint256 lootBoxId;
         uint256 id;
-        address[] currencies;
         StateConfig vmStateConfig;
         address vmStatePointer;
+        CurrencyConfig currencies;
         address recipient;
         string tokenURI;
-        uint256[] currencyTypes;
     }
 
     // EVENTS
@@ -77,7 +81,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         returns (uint256 entrtyPoint)
     {
         entrtyPoint = paymentToken[assetId_][paymentToken_];
-        require(entrtyPoint < assets[assetId_].currencies.length, "Invalid payment token");
+        require(entrtyPoint < assets[assetId_].currencies.token.length, "Invalid payment token");
     }
 
     function getAssetMaxUnits(uint256 assetId_, address account_, uint256 units_)
@@ -85,7 +89,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         view
         returns (uint256)
     {   
-        (uint256 maxUnits_,) = getAssetCost(assetId_, account_, units_);
+        (uint256 maxUnits_, ) = getAssetCost(assetId_, account_, units_);
 
         return maxUnits_;
     }
@@ -102,16 +106,28 @@ contract Rain1155 is ERC1155Supply, RainVM {
     }
 
     function createNewAsset(AssetConfig memory config_) external {
+        require(config_.currencies.token.length == config_.currencies.tokenType.length, "Invalid Argument");
+        require(config_.currencies.token.length == config_.currencies.tokenId.length, "Invalid Argument");
+        for (uint256 i = 0; i < config_.currencies.token.length; i++) {
+            require(config_.currencies.tokenType[i] <= 1, "Invalid Argument");
+            if (config_.currencies.tokenType[i] == 0) {
+                require(config_.currencies.tokenId[i] == 0, "Invalid Argument");
+            }
+            if (config_.currencies.tokenType[i] == 1) {
+                require(config_.currencies.tokenId[i] != 0, "Invalid Argument");
+            }
+        }
+
         totalAssets = totalAssets + 1;
 
-        Bounds memory costBound;
-        costBound.entrypoint = 0;
+        Bounds memory calculateCostBound;
+        calculateCostBound.entrypoint = 0;
 
         Bounds[] memory bounds_ = new Bounds[](1);
-        bounds_[0] = costBound;
+        bounds_[0] = calculateCostBound;
 
-        for (uint256 i = 0; i < config_.currencies.length; i++) {
-            paymentToken[totalAssets][config_.currencies[i]] = i;
+        for (uint256 i = 0; i < config_.currencies.token.length; i++) {
+            paymentToken[totalAssets][config_.currencies.token[i]] = i;
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
@@ -122,13 +138,12 @@ contract Rain1155 is ERC1155Supply, RainVM {
 
         assets[totalAssets] = AssetDetails(
             config_.lootBoxId,
-            totalAssets,
-            config_.currencies,   
+            totalAssets,  
             config_.vmStateConfig,
             SSTORE2.write(vmStateBytes_),
+            config_.currencies,
             config_.recipient,
-            config_.tokenURI,
-            config_.currencyTypes
+            config_.tokenURI
         );
 
         emit AssetCreated(
@@ -144,10 +159,15 @@ contract Rain1155 is ERC1155Supply, RainVM {
         address paymentToken_,
         address account_,
         uint256 units_
-    ) public view returns (uint256) {
+    ) public view returns (uint256, uint256, uint256) {
         (, uint256[] memory prices_) = getAssetCost(assetId_, account_, units_);
+        uint256 index = _priceEntryPoint(assetId_, paymentToken_);
 
-        return prices_[_priceEntryPoint(assetId_, paymentToken_)];
+        return (
+            prices_[index],
+            assets[assetId_].currencies.tokenType[index],
+            assets[assetId_].currencies.tokenId[index]
+        );
     }
 
     function getAssetCost(
@@ -162,13 +182,14 @@ contract Rain1155 is ERC1155Supply, RainVM {
         eval(abi.encodePacked(context_), state_, 0);
         uint256[] memory stack = state_.stack;
 
+        uint256[] memory tokenIds = assets[assetId_].currencies.tokenId;
         uint256 maxUnits = stack[stack.length - 2];
         uint256 stackPointer = stack.length - 1;
-        uint256[] memory prices = new uint256[](assets[assetId_].currencies.length);
+        uint256[] memory prices = new uint256[](tokenIds.length);
         
-        for (uint256 i = 0; i < assets[assetId_].currencies.length; i++) {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
             unchecked {
-                uint256 count = assets[assetId_].currencies.length - (i + 1);
+                uint256 count = tokenIds.length - (i + 1);
                 prices[count] = stack[stackPointer];
                 maxUnits = maxUnits.min(stack[stackPointer - 1]);
                 stackPointer -= 2;
@@ -184,24 +205,22 @@ contract Rain1155 is ERC1155Supply, RainVM {
         require(maxUnits_ > 0, "Cant Mint");
         maxUnits_ = maxUnits_.min(units_);
 
-        uint256 count;
-        for (uint256 i = 0; i < assets[assetId_].currencies.length; i++) {
-            if (assets[assetId_].currencyTypes[count] == 0) {
-                ITransfer(assets[assetId_].currencies[i]).transferFrom(
+        for (uint256 i = 0; i < assets[assetId_].currencies.token.length; i++) {
+            if (assets[assetId_].currencies.tokenType[i] == 0) {
+                ITransfer(assets[assetId_].currencies.token[i]).transferFrom(
                     msg.sender,
                     assets[assetId_].recipient,
                     prices_[i] * maxUnits_
                 );
-            } else if (assets[assetId_].currencyTypes[count] == 1) {
-                ITransfer(assets[assetId_].currencies[i]).safeTransferFrom(
+            } else if (assets[assetId_].currencies.tokenType[i] == 1) {
+                ITransfer(assets[assetId_].currencies.token[i]).safeTransferFrom(
                     msg.sender,
                     assets[assetId_].recipient,
-                    assets[assetId_].currencyTypes[++count],
+                    assets[assetId_].currencies.tokenId[i],
                     prices_[i] * maxUnits_,
                     ""
                 );
             }
-            count++;
         }
         _mint(msg.sender, assetId_, maxUnits_, "");
     }
