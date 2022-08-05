@@ -168,6 +168,7 @@ pkgs.stdenv.mkDerivation {
   buildInputs = [
     pkgs.nixpkgs-fmt
     pkgs.yarn
+    pkgs.nodePackages.npm
     pkgs.nodejs-16_x
     pkgs.slither-analyzer
     compile

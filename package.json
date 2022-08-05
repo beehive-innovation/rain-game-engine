@@ -72,6 +72,6 @@
     "dotenv": "^16.0.0",
     "gluegun": "^5.1.2",
     "mustache": "^4.2.0",
-    "rain-sdk": "2.0.0"
+    "rain-sdk": "git+https://github.com/beehive-innovation/rain-sdk.git#ca8908eaa569b0cc3a3e1a23611b9b818614afa0"
   }
 }
