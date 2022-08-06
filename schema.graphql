@@ -19,7 +19,7 @@ type Asset @entity {
   "Name of asset"
   name: String! # event.params._name
   "Description of Asset"
-  description: String! # event.params._descciption
+  description: String! # event.params._description
   "Id of asset"
   assetId: BigInt! # event.params._asset._assetId
   "Creator of this asset"
@@ -42,34 +42,6 @@ type Asset @entity {
   # metadata: String!
 }
 
-# # create from AssetCreated event
-# type PriceConfig @entity {
-#   #{Rain1155.address}-{event.params._asset._assetId}
-#   id: ID!
-#   # event.params._asset._priceConfig.sources
-#   sources: [Bytes!]!
-#   # event.params._asset._priceConfig.constants
-#   constants: [BigInt!]!
-#   # event.params._asset._priceConfig.stackLength
-#   stackLength: BigInt!
-#   # event.params._asset._priceConfig.argumentsLength
-#   argumentsLength: BigInt!
-# }
-
-# # create from AssetCreated event
-# type CanMintConfig @entity {
-#   #{Rain1155.address}-{event.params._asset._assetId}
-#   id: ID!
-#   # event.params._asset._priceConfig.sources
-#   sources: [Bytes!]!
-#   # event.params._asset._priceConfig.constants
-#   constants: [BigInt!]!
-#   # event.params._asset._priceConfig.stackLength
-#   stackLength: BigInt!
-#   # event.params._asset._priceConfig.argumentsLength
-#   argumentsLength: BigInt!
-# }
-
 # Create on every TransferSingle or TransferBatch event
 type Holder @entity {
   id: ID! #{Rain1155.address}-{event.params.to}
@@ -82,12 +54,12 @@ type Holder @entity {
 type AssetsOwned @entity {
   id: ID! #{Rain1155.address}-{Receiver}-{event.params.id}
   "Asset entity"
-  asset: Asset! # Asset that is minted or transferd
+  asset: Asset! # Asset that is minted or transferred
   "Id of asset"
   assetId: BigInt! # Id od that Asset
   "Amount of this asset owned"
   count: BigInt! # TotalNumber of assets Owned of AssetId
-  # Increament for every AssetId.
+  # Increment for every AssetId.
 }
 
 type Currency @entity {

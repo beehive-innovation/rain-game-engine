@@ -6,7 +6,7 @@ import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
-
+import "@nomiclabs/hardhat-web3";
 dotenv.config();
 
 function createLocalHostConfig() {

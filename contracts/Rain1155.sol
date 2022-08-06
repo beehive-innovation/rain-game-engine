@@ -8,6 +8,7 @@ import "@beehiveinnovation/rain-protocol/contracts/tier/libraries/TierReport.sol
 import {AllStandardOps} from "@beehiveinnovation/rain-protocol/contracts/vm/ops/AllStandardOps.sol";
 import "@beehiveinnovation/rain-protocol/contracts/vm/VMStateBuilder.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "hardhat/console.sol";
 
 struct Rain1155Config {
     address vmStateBuilder;
@@ -39,6 +40,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
     address private immutable vmStateBuilder;
 
     mapping(uint256 => mapping(address => uint256)) private paymentToken;
+
     mapping(uint256 => AssetDetails) public assets;
 
     struct AssetDetails {
@@ -81,14 +83,17 @@ contract Rain1155 is ERC1155Supply, RainVM {
         returns (uint256 entrtyPoint)
     {
         entrtyPoint = paymentToken[assetId_][paymentToken_];
-        require(entrtyPoint < assets[assetId_].currencies.token.length, "Invalid payment token");
+        require(
+            entrtyPoint < assets[assetId_].currencies.token.length,
+            "Invalid payment token"
+        );
     }
 
-    function getAssetMaxUnits(uint256 assetId_, address account_, uint256 units_)
-        public
-        view
-        returns (uint256)
-    {   
+    function getAssetMaxUnits(
+        uint256 assetId_,
+        address account_,
+        uint256 units_
+    ) public view returns (uint256) {
         (uint256 maxUnits_, ) = getAssetCost(assetId_, account_, units_);
 
         return maxUnits_;
@@ -106,8 +111,16 @@ contract Rain1155 is ERC1155Supply, RainVM {
     }
 
     function createNewAsset(AssetConfig memory config_) external {
-        require(config_.currencies.token.length == config_.currencies.tokenType.length, "Invalid Argument");
-        require(config_.currencies.token.length == config_.currencies.tokenId.length, "Invalid Argument");
+        require(
+            config_.currencies.token.length ==
+                config_.currencies.tokenType.length,
+            "Invalid Argument"
+        );
+        require(
+            config_.currencies.token.length ==
+                config_.currencies.tokenId.length,
+            "Invalid Argument"
+        );
         for (uint256 i = 0; i < config_.currencies.token.length; i++) {
             require(config_.currencies.tokenType[i] <= 1, "Invalid Argument");
             if (config_.currencies.tokenType[i] == 0) {
@@ -138,7 +151,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
 
         assets[totalAssets] = AssetDetails(
             config_.lootBoxId,
-            totalAssets,  
+            totalAssets,
             config_.vmStateConfig,
             SSTORE2.write(vmStateBytes_),
             config_.currencies,
@@ -159,7 +172,15 @@ contract Rain1155 is ERC1155Supply, RainVM {
         address paymentToken_,
         address account_,
         uint256 units_
-    ) public view returns (uint256, uint256, uint256) {
+    )
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         (, uint256[] memory prices_) = getAssetCost(assetId_, account_, units_);
         uint256 index = _priceEntryPoint(assetId_, paymentToken_);
 
@@ -185,7 +206,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         uint256 stackPointer = state_.stackIndex - 1;
         uint256 maxUnits = state_.stack[state_.stackIndex - 2];
         uint256[] memory prices = new uint256[](tokenIds.length);
-        
+
         for (uint256 i = 0; i < tokenIds.length; i++) {
             unchecked {
                 uint256 count = tokenIds.length - (i + 1);
@@ -200,7 +221,11 @@ contract Rain1155 is ERC1155Supply, RainVM {
     function mintAssets(uint256 assetId_, uint256 units_) external {
         require(assetId_ <= totalAssets, "Invalid AssetId");
 
-        (uint256 maxUnits_, uint256[] memory prices_)= getAssetCost(assetId_, msg.sender, units_);
+        (uint256 maxUnits_, uint256[] memory prices_) = getAssetCost(
+            assetId_,
+            msg.sender,
+            units_
+        );
         require(maxUnits_ > 0, "Cant Mint");
         maxUnits_ = maxUnits_.min(units_);
 
@@ -212,13 +237,14 @@ contract Rain1155 is ERC1155Supply, RainVM {
                     prices_[i] * maxUnits_
                 );
             } else if (assets[assetId_].currencies.tokenType[i] == 1) {
-                ITransfer(assets[assetId_].currencies.token[i]).safeTransferFrom(
-                    msg.sender,
-                    assets[assetId_].recipient,
-                    assets[assetId_].currencies.tokenId[i],
-                    prices_[i] * maxUnits_,
-                    ""
-                );
+                ITransfer(assets[assetId_].currencies.token[i])
+                    .safeTransferFrom(
+                        msg.sender,
+                        assets[assetId_].recipient,
+                        assets[assetId_].currencies.tokenId[i],
+                        prices_[i] * maxUnits_,
+                        ""
+                    );
             }
         }
         _mint(msg.sender, assetId_, maxUnits_, "");
@@ -244,4 +270,3 @@ interface ITransfer {
         uint256 amount
     ) external returns (bool);
 }
-

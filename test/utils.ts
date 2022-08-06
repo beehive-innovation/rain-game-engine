@@ -4,7 +4,7 @@ import { StateConfigStruct } from "../typechain/Rain1155"
 // import { Factory, NewChildEvent } from "../typechain/Factory"
 import { ContractTransaction, Contract, BigNumber, Overrides } from "ethers";
 import { Result } from "ethers/lib/utils";
-import { ethers } from "hardhat";
+import { ethers, web3 } from "hardhat";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -16,6 +16,11 @@ export type VMState = StateConfigStruct;
 export const eighteenZeros = "000000000000000000"
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
+export enum slot {
+  self = 5,
+  vmStateBuilder,
+  currencyConfig
+}
 export enum Type {
   ERC20,
   ERC1155
@@ -370,3 +375,20 @@ export const exec = (cmd: string): string | Buffer => {
     throw new Error(`Failed to run command \`${cmd}\``);
   }
 };
+
+export async function getPrivate_uint256(contractAddress: string, slotIndex: number): Promise<BigNumber> {
+  const variable = await ethers.provider.getStorageAt(contractAddress, slotIndex);
+  return ethers.BigNumber.from(variable);
+}
+
+export async function getPrivate_string(contractAddress: string, slotIndex: number): Promise<string> {
+  const variable = await ethers.provider.getStorageAt(contractAddress, slotIndex);
+  const hexLength = "0x" + variable.slice(64);
+  const length = parseInt(hexLength, 16);
+  return web3.utils.toAscii(variable.slice(0, length + 2));
+}
+
+export async function getPrivate_address(contractAddress: string, slotIndex: number): Promise<string> {
+  const variable = await ethers.provider.getStorageAt(contractAddress, slotIndex);
+  return ("0x" + variable.slice(26));
+}
