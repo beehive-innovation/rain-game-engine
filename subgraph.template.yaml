@@ -29,7 +29,7 @@ dataSources:
       eventHandlers:
         - event: ApprovalForAll(indexed address,indexed address,bool)
           handler: handleApprovalForAll
-        - event: AssetCreated(uint256,(uint256,uint256,address[],(bytes[],uint256[]),address,address,string,uint256[]),string,string)
+        - event: AssetCreated(uint256,(uint256,uint256,(bytes[],uint256[]),address,(address[],uint256[],uint256[]),address,string),string,string)
           handler: handleAssetCreated
         - event: Initialize(address,(address))
           handler: handleInitialize
