@@ -14,7 +14,7 @@
 // import { AllStandardOps } from "rain-sdk";
 
 // const LEVELS = Array.from(Array(8).keys()).map((value) =>
-//   ethers.BigNumber.from(++value + eighteenZeros)
+//   BN(++value + eighteenZeros)
 // ); // [1,2,3,4,5,6,7,8]
 
 // export let rain1155: Rain1155
@@ -131,15 +131,15 @@
 
 //   it("Should create asset from creator.", async function () {
 //     /// Minting before creating assets
-//     await PLANES.connect(buyer1).mintTokens(ethers.BigNumber.from("15"), 5)
-//     await SHIPS.connect(buyer1).mintTokens(ethers.BigNumber.from("1"), 11)
+//     await PLANES.connect(buyer1).mintTokens(BN("15"), 5)
+//     await SHIPS.connect(buyer1).mintTokens(BN("1"), 11)
 
 
 
 //     const blockCondition = 15
 
 //     const vmStateConfig = {
-//       constants: [10, ethers.BigNumber.from("1" + eighteenZeros), 10, ethers.BigNumber.from("25" + eighteenZeros), 9, 10, 9, 5],
+//       constants: [10, BN("1" + eighteenZeros), 10, BN("25" + eighteenZeros), 9, 10, 9, 5],
 //       sources: [
         // concat([
         //   op(AllStandardOps.CONSTANT, 0),
@@ -183,7 +183,7 @@
 //     }
 
 //     expect(expectAsset).to.deep.equals({
-//       lootBoxId: ethers.BigNumber.from("0"),
+//       lootBoxId: BN("0"),
 //       tokenURI: "https://ipfs.io/ipfs/QmVfbKBM7XxqZMRFzRGPGkWT8oUFNYY1DeK5dcoTgLuV8H",
 //       creator: creator.address,
 //     })
@@ -191,7 +191,7 @@
 
 //   it("Should buy asset '1'", async function() {
 
-//     await CARS.connect(buyer1).mintTokens(ethers.BigNumber.from("5"), 10)
+//     await CARS.connect(buyer1).mintTokens(BN("5"), 10)
 
 //     await rTKN.connect(buyer1).mintTokens(5)
 
@@ -213,16 +213,16 @@
     
 //     await rain1155.connect(buyer1).mintAssets(1,1);
 
-//     expect(await rain1155.balanceOf(buyer1.address, 1)).to.deep.equals(ethers.BigNumber.from("1"))
+//     expect(await rain1155.balanceOf(buyer1.address, 1)).to.deep.equals(BN("1"))
 
-//     expect(await USDT.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("1" + eighteenZeros))
-//     expect(await BNB.balanceOf(creator.address)).to.deep.equals(ethers.BigNumber.from("25" + eighteenZeros))
-//     expect(await CARS.balanceOf(creator.address, 5)).to.deep.equals(ethers.BigNumber.from("10"))
-//     expect(await PLANES.balanceOf(creator.address, 15)).to.deep.equals(ethers.BigNumber.from("5"))
+//     expect(await USDT.balanceOf(creator.address)).to.deep.equals(BN("1" + eighteenZeros))
+//     expect(await BNB.balanceOf(creator.address)).to.deep.equals(BN("25" + eighteenZeros))
+//     expect(await CARS.balanceOf(creator.address, 5)).to.deep.equals(BN("10"))
+//     expect(await PLANES.balanceOf(creator.address, 15)).to.deep.equals(BN("5"))
     
-//     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-//     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(ethers.BigNumber.from("0" + eighteenZeros))
-//     expect(await CARS.balanceOf(buyer1.address, 5)).to.deep.equals(ethers.BigNumber.from("0"))
-//     expect(await PLANES.balanceOf(buyer1.address, 15)).to.deep.equals(ethers.BigNumber.from("0"))
+//     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(BN("0" + eighteenZeros))
+//     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(BN("0" + eighteenZeros))
+//     expect(await CARS.balanceOf(buyer1.address, 5)).to.deep.equals(BN("0"))
+//     expect(await PLANES.balanceOf(buyer1.address, 15)).to.deep.equals(BN("0"))
 //   });
 // });

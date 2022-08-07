@@ -39,6 +39,8 @@ contract Rain1155 is ERC1155Supply, RainVM {
     address private immutable self;
     address private immutable vmStateBuilder;
 
+    mapping (uint256 => address) private test; // testing
+
     mapping(uint256 => mapping(address => uint256)) private paymentToken;
 
     mapping(uint256 => AssetDetails) public assets;
@@ -68,6 +70,12 @@ contract Rain1155 is ERC1155Supply, RainVM {
         self = address(this);
         vmStateBuilder = config_.vmStateBuilder;
         emit Initialize(msg.sender, config_);
+
+        uint256 slot;
+        assembly {
+            slot := test.slot
+        }
+        console.log(slot);
     }
 
     function _loadState(uint256 assetId_) internal view returns (State memory) {
@@ -83,10 +91,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
         returns (uint256 entrtyPoint)
     {
         entrtyPoint = paymentToken[assetId_][paymentToken_];
-        require(
-            entrtyPoint < assets[assetId_].currencies.token.length,
-            "Invalid payment token"
-        );
+        require(assets[assetId_].currencies.token[entrtyPoint] == paymentToken_, "Invalid payment token");
     }
 
     function getAssetMaxUnits(
@@ -141,6 +146,7 @@ contract Rain1155 is ERC1155Supply, RainVM {
 
         for (uint256 i = 0; i < config_.currencies.token.length; i++) {
             paymentToken[totalAssets][config_.currencies.token[i]] = i;
+            test[totalAssets] = config_.currencies.token[i]; // testing
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(
@@ -230,21 +236,23 @@ contract Rain1155 is ERC1155Supply, RainVM {
         maxUnits_ = maxUnits_.min(units_);
 
         for (uint256 i = 0; i < assets[assetId_].currencies.token.length; i++) {
-            if (assets[assetId_].currencies.tokenType[i] == 0) {
-                ITransfer(assets[assetId_].currencies.token[i]).transferFrom(
-                    msg.sender,
-                    assets[assetId_].recipient,
-                    prices_[i] * maxUnits_
-                );
-            } else if (assets[assetId_].currencies.tokenType[i] == 1) {
-                ITransfer(assets[assetId_].currencies.token[i])
-                    .safeTransferFrom(
+           if (prices_[i] > 0) {
+                if (assets[assetId_].currencies.tokenType[i] == 0) {
+                    ITransfer(assets[assetId_].currencies.token[i]).transferFrom(
                         msg.sender,
                         assets[assetId_].recipient,
-                        assets[assetId_].currencies.tokenId[i],
-                        prices_[i] * maxUnits_,
-                        ""
+                        prices_[i] * maxUnits_
                     );
+                } else if (assets[assetId_].currencies.tokenType[i] == 1) {
+                    ITransfer(assets[assetId_].currencies.token[i])
+                        .safeTransferFrom(
+                            msg.sender,
+                            assets[assetId_].recipient,
+                            assets[assetId_].currencies.tokenId[i],
+                            prices_[i] * maxUnits_,
+                            ""
+                        );
+                }
             }
         }
         _mint(msg.sender, assetId_, maxUnits_, "");

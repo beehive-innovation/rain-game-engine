@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import path from "path";
 import { InitializeEvent, Rain1155, Rain1155ConfigStruct } from "../../typechain/Rain1155";
-import { fetchFile, getEventArgs, getPrivate_address, slot, writeFile } from "../utils";
+import { fetchFile, getEventArgs, writeFile } from "../utils";
 import { deployer } from "./1_setup.test";
 
 let rain1155: Rain1155;
@@ -27,7 +27,6 @@ describe("Rain1155 Deploy test", () => {
         config.rain1155 = rain1155.address;
         config.rain1155Block = rain1155.deployTransaction.blockNumber;
         writeFile(configPath, JSON.stringify(config, null, 2));
-
     });
 
     it("It should deploy rain1155 contract",async () => {

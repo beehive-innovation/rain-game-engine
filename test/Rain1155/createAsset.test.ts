@@ -3,9 +3,10 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import path from "path";
 import { AssetConfigStruct, AssetDetailsStruct, Rain1155, Rain1155ConfigStruct } from "../../typechain/Rain1155";
-import { concat, eighteenZeros, fetchFile, getEventArgs, op } from "../utils";
+import { BN, concat, eighteenZeros, fetchFile, getEventArgs, op } from "../utils";
 import { BNB, CARS, deployer, PLANES, signers, USDT } from "./1_setup.test";
 import { StateConfig, VM } from "rain-sdk";
+
 let rain1155Config: Rain1155ConfigStruct;
 let config;
 let rain1155: Rain1155;
@@ -32,7 +33,7 @@ describe("Create Asset test", () => {
     });
 
     it("Anyone should be able to create asset",async () => {
-        let vmStateConfig: StateConfig = {
+        let vmStateConfig_: StateConfig = {
             sources: [
                 concat([
                     op(VM.Opcodes.CONSTANT, 0),
@@ -48,7 +49,7 @@ describe("Create Asset test", () => {
                     op(VM.Opcodes.CONSTANT, 7),
                   ])
             ],
-            constants: [10, ethers.BigNumber.from("1" + eighteenZeros), 10, ethers.BigNumber.from("25" + eighteenZeros), 9, 10, 9, 5]
+            constants: [10, BN("1" + eighteenZeros), 10, BN("25" + eighteenZeros), 9, 10, 9, 5]
         }
 
         assetConfig = {
@@ -62,7 +63,7 @@ describe("Create Asset test", () => {
                 tokenId: [0, 0, 5, 15]
             },
             tokenURI: "TOKEN_URI",
-            vmStateConfig: vmStateConfig
+            vmStateConfig: vmStateConfig_
         }
 
         let createAssetTrx = await rain1155.connect(creator).createNewAsset(assetConfig);
@@ -71,10 +72,36 @@ describe("Create Asset test", () => {
 
         const asset = asset_ as AssetDetailsStruct;
 
-        expect(assetId_).to.deep.equals(ethers.BigNumber.from(1));
+        let token = assetConfig.currencies.token
+        let token_ = asset.currencies.token
+
+        let tokenType = assetConfig.currencies.tokenType
+        let tokenType_ = asset.currencies.tokenType
+
+        let tokenId = assetConfig.currencies.tokenId
+        let tokenId_ = asset.currencies.tokenId
+
+        expect(assetId_).to.deep.equals(BN(1));
         expect(name).to.deep.equals(assetConfig.name);
         expect(description).to.deep.equals(assetConfig.description);
-        expect(asset.lootBoxId).to.deep.equals(ethers.BigNumber.from(assetConfig.lootBoxId));
+        expect(asset.lootBoxId).to.deep.equals(BN(assetConfig.lootBoxId));
         expect(asset.recipient).to.deep.equals(assetConfig.recipient);
+        expect(asset.vmStatePointer).to.not.null;
+        
+        expect(token_).to.deep.equals(token);
+        expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
+        expect(tokenId_).to.deep.equals(tokenId.map(id => BN(id)));
+
+        const [ lootBoxId, id, vmStateConfig, vmStatePointer, currencies ] = await rain1155.assets(assetId_);
+
+        expect(BN(assetConfig.lootBoxId)).to.deep.equals(lootBoxId);
+        expect(BN(1)).to.deep.equals(id);
+        expect(asset.vmStatePointer).to.equals(vmStatePointer);
+
+        [ token, tokenType, tokenId ] = currencies;
+
+        expect(token_).to.deep.equals(token);
+        expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
+        expect(tokenId_).to.deep.equals(tokenId.map(id => BN(id)));
     });
 });

@@ -6,7 +6,7 @@ import path from "path";
 export let owner: SignerWithAddress
 
 const LEVELS = Array.from(Array(8).keys()).map((value) =>
-  ethers.BigNumber.from(++value + eighteenZeros)
+  BN(++value + eighteenZeros)
 ); // [1,2,3,4,5,6,7,8]
 
 async function main() {
