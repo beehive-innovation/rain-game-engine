@@ -39,8 +39,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
     address private immutable self;
     address private immutable vmStateBuilder;
 
-    mapping (uint256 => address) private test; // testing
-
     mapping(uint256 => mapping(address => uint256)) private paymentToken;
 
     mapping(uint256 => AssetDetails) public assets;
@@ -70,12 +68,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
         self = address(this);
         vmStateBuilder = config_.vmStateBuilder;
         emit Initialize(msg.sender, config_);
-
-        uint256 slot;
-        assembly {
-            slot := test.slot
-        }
-        console.log(slot);
     }
 
     function _loadState(uint256 assetId_) internal view returns (State memory) {
@@ -146,7 +138,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
 
         for (uint256 i = 0; i < config_.currencies.token.length; i++) {
             paymentToken[totalAssets][config_.currencies.token[i]] = i;
-            test[totalAssets] = config_.currencies.token[i]; // testing
         }
 
         bytes memory vmStateBytes_ = VMStateBuilder(vmStateBuilder).buildState(

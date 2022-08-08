@@ -13,7 +13,6 @@ import {
   eighteenZeros,
   fetchFile,
   getEventArgs,
-  getPrivate_uint256,
   op,
   ZERO_ADDRESS,
 } from "../utils";

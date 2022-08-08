@@ -12,15 +12,19 @@ import {
   concat,
   eighteenZeros,
   fetchFile,
-  getEventArgs,
-  getPrivate_mapping_address,
-  getPrivate_nestedMapping_uint256,
-  getPrivate_uint256,
   op,
-  ZERO_ADDRESS,
 } from "../utils";
-import { BNB, CARS, deployer, PLANES, signers, SOL, USDT } from "./1_setup.test";
+import {
+  BNB,
+  CARS,
+  deployer,
+  PLANES,
+  signers,
+  SOL,
+  USDT,
+} from "./1_setup.test";
 import { StateConfig, VM } from "rain-sdk";
+import { getPrivate_nestedMapping_uint256, getPrivate_mapping_address_uint256 } from "../storage";
 let rain1155Config: Rain1155ConfigStruct;
 let config;
 let rain1155: Rain1155;
@@ -31,7 +35,7 @@ let buyer: SignerWithAddress;
 
 const paymentTokenSlot = 5;
 
-xdescribe("Rain1155 getAssetCost test", () => {
+describe.only("Rain1155 getAssetCost test", () => {
   describe("single ERC20 test", () => {
     const maxUnits = 10;
     before(async () => {
@@ -81,7 +85,7 @@ xdescribe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct entryPoint for asset with one currency", async () => {
-      expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, USDT.address)).to.equals(BN(0));
+      // expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, USDT.address)).to.equals(BN(0));
     });
   });
 
@@ -134,12 +138,12 @@ xdescribe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct entryPoint for asset with one currency", async () => {
-        expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, USDT.address)).to.equals(BN(0));
-      });
+      // expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, USDT.address)).to.equals(BN(0));
+    });
   });
 
   describe("multiple ERC20/ERC1155 test", () => {
-    const max_units  = 10;
+    const max_units = 10;
     const BNB_Price = BN(1 + eighteenZeros);
     const SOL_Price = BN(2 + eighteenZeros);
     const PLANES_Price = 5;
@@ -183,7 +187,16 @@ xdescribe("Rain1155 getAssetCost test", () => {
             op(VM.Opcodes.CONSTANT, 5),
           ]),
         ],
-        constants: [max_units, BNB_Price, max_units, SOL_Price, max_units, PLANES_Price, max_units, CARS_Price],
+        constants: [
+          max_units,
+          BNB_Price,
+          max_units,
+          SOL_Price,
+          max_units,
+          PLANES_Price,
+          max_units,
+          CARS_Price,
+        ],
       };
 
       assetConfig = {
@@ -204,10 +217,39 @@ xdescribe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct entryPoint for asset with one currency", async () => {
-        expect(await getPrivate_mapping_address(rain1155.address, paymentTokenSlot, 1)).to.equals(BNB.address.toLowerCase());
-        // expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, SOL.address)).to.equals(BN(1));
-        // expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, PLANES.address)).to.equals(BN(2));
-        // expect(await getPrivate_nestedMapping_uint256(rain1155.address, paymentTokenSlot, 1, CARS.address)).to.equals(BN(3));
-      });
+      console.log(await getPrivate_mapping_address_uint256(rain1155.address, 5, BNB.address))
+      expect(
+        await getPrivate_nestedMapping_uint256(
+          rain1155.address,
+          6,
+          1,
+          BNB.address
+        )
+      ).to.equals(BN(0));
+      expect(
+        await getPrivate_nestedMapping_uint256(
+          rain1155.address,
+          6,
+          1,
+          SOL.address
+        )
+      ).to.equals(BN(1));
+      expect(
+        await getPrivate_nestedMapping_uint256(
+          rain1155.address,
+          6,
+          1,
+          PLANES.address
+        )
+      ).to.equals(BN(2));
+      expect(
+        await getPrivate_nestedMapping_uint256(
+          rain1155.address,
+          6,
+          1,
+          CARS.address
+        )
+      ).to.equals(BN(3));
+    });
   });
 });
