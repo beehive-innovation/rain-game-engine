@@ -35,7 +35,7 @@ let buyer: SignerWithAddress;
 
 const paymentTokenSlot = 5;
 
-describe.only("Rain1155 getAssetCost test", () => {
+describe("Rain1155 getAssetCost test", () => {
   describe("single ERC20 test", () => {
     const maxUnits = 10;
     before(async () => {
