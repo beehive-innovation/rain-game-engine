@@ -57,7 +57,10 @@ export async function getPrivate_mapping_uint256_address(
   slotIndex: number,
   key: number
 ): Promise<string> {
-  const new_key = getMappingSlot(key, slotIndex);
+  const new_key = web3.utils.soliditySha3(
+    { t: "uint", v: key },
+    { t: "uint", v: slotIndex }
+  );
   return await getPrivate_address(contractAddress, new_key);
 }
 
@@ -67,7 +70,7 @@ export async function getPrivate_mapping_address_uint256(
     key: string
   ): Promise<BigNumberish> {
     const new_key = web3.utils.soliditySha3(
-        { t: "address", v: key },
+        { t: "uint", v: key },
         { t: "uint", v: slotIndex});
     return (await ethers.provider.getStorageAt(contractAddress, new_key));
   }
@@ -83,8 +86,8 @@ export async function getPrivate_nestedMapping_uint256(
     { t: "uint", v: standardizeInput(slotIndex) }
   );
   const location2 = web3.utils.soliditySha3(
-    { t: "address", v: key2 },
-    { t: "string", v: standardizeInput(location1) }
+    { t: "uint", v: key2 },
+    { t: "uint", v: location1 }
   );
   return await getPrivate_uint256(contractAddress, location2);
 }

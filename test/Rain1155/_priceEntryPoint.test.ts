@@ -24,7 +24,7 @@ import {
   USDT,
 } from "./1_setup.test";
 import { StateConfig, VM } from "rain-sdk";
-import { getPrivate_nestedMapping_uint256, getPrivate_mapping_address_uint256 } from "../storage";
+import { getPrivate_nestedMapping_uint256 } from "../storage";
 let rain1155Config: Rain1155ConfigStruct;
 let config;
 let rain1155: Rain1155;
@@ -35,7 +35,7 @@ let buyer: SignerWithAddress;
 
 const paymentTokenSlot = 5;
 
-describe.only("Rain1155 getAssetCost test", () => {
+describe("Rain1155 getAssetCost test", () => {
   describe("single ERC20 test", () => {
     const maxUnits = 10;
     before(async () => {
@@ -217,11 +217,10 @@ describe.only("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct entryPoint for asset with one currency", async () => {
-      console.log(await getPrivate_mapping_address_uint256(rain1155.address, 5, BNB.address))
       expect(
         await getPrivate_nestedMapping_uint256(
           rain1155.address,
-          6,
+          paymentTokenSlot,
           1,
           BNB.address
         )
@@ -229,7 +228,7 @@ describe.only("Rain1155 getAssetCost test", () => {
       expect(
         await getPrivate_nestedMapping_uint256(
           rain1155.address,
-          6,
+          paymentTokenSlot,
           1,
           SOL.address
         )
@@ -237,7 +236,7 @@ describe.only("Rain1155 getAssetCost test", () => {
       expect(
         await getPrivate_nestedMapping_uint256(
           rain1155.address,
-          6,
+          paymentTokenSlot,
           1,
           PLANES.address
         )
@@ -245,7 +244,7 @@ describe.only("Rain1155 getAssetCost test", () => {
       expect(
         await getPrivate_nestedMapping_uint256(
           rain1155.address,
-          6,
+          paymentTokenSlot,
           1,
           CARS.address
         )
