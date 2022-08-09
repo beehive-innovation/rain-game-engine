@@ -14,11 +14,13 @@ import { ethers, web3, Web3 } from "hardhat";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { assert } from "chai";
 
 const logger = new Logger(version);
 
 export type VMState = StateConfigStruct;
 
+export const sixZeros = "000000";
 export const eighteenZeros = "000000000000000000";
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -426,3 +428,14 @@ export const exec = (cmd: string): string | Buffer => {
 export function BN(num: BigNumberish): BigNumber {
   return ethers.BigNumber.from(num);
 }
+
+export const assertError = async (f, s: string, e: string) => {
+  let didError = false;
+  try {
+    await f();
+  } catch (e) {
+    assert(e.toString().includes(s), `error string ${e} does not include ${s}`);
+    didError = true;
+  }
+  assert(didError, e);
+};
