@@ -65,9 +65,9 @@ const config: HardhatUserConfig = {
       },
     ],
   },
-  // defaultNetwork: "localhost",
+  defaultNetwork: "localhost",
   networks: {
-    // localhost: createLocalHostConfig(),
+    localhost: createLocalHostConfig(),
     hardhat: {
       blockGasLimit: 30000000,
       allowUnlimitedContractSize: true,
