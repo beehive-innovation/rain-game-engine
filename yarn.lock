@@ -9838,9 +9838,9 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
-"rain-sdk@git+https://github.com/beehive-innovation/rain-sdk.git#cca35e713efd5b40520484959df20e1a8f14d0e3":
+"rain-sdk@git+https://github.com/beehive-innovation/rain-sdk.git#275c1a04b9bc85ee1ef7539f0bd7682f0621e4b7":
   version "2.1.1-beta"
-  resolved "git+https://github.com/beehive-innovation/rain-sdk.git#cca35e713efd5b40520484959df20e1a8f14d0e3"
+  resolved "git+https://github.com/beehive-innovation/rain-sdk.git#275c1a04b9bc85ee1ef7539f0bd7682f0621e4b7"
   dependencies:
     ethers "^5.5.2"
     prettier "^2.6.2"
