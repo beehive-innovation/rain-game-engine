@@ -42,25 +42,25 @@ export function getERCType(address: Bytes): ERCType {
 }
 
 
-export function getCurrency(address: Bytes, type: ERCType, tokenId: BigInt): Currency{
+export function getCurrency(address: Bytes, type: BigInt, tokenId: BigInt): Currency{
     let currency = Currency.load(address.toHex());
     if(!currency){
         currency = new Currency(address.toHex());
         currency.address = address;
-        if(type == ERCType.ERC20){
+        if(type == ZERO_BI){
             let erc20 = ERC20.bind(Address.fromBytes(address));
             currency.type = "ERC20";
             currency.name = erc20.name();
             currency.symbol = erc20.symbol();
             currency.decimals = erc20.decimals();
             currency.save()
-        }else if(type == ERCType.ERC721){
+        }else if(type == ONE_BI){
             let erc721 = ERC721.bind(Address.fromBytes(address));
             currency.type = "ERC721";
             currency.name = erc721.name();
             currency.symbol = erc721.symbol();
             currency.save();
-        }else if (type == ERCType.ERC1155){
+        }else if (type == ONE_BI.plus(ONE_BI)){
             let erc1155 = Rain1155.bind(Address.fromBytes(address));
             currency.type = "ERC1155";
             // let i = 0;

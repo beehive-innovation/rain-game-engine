@@ -14,6 +14,7 @@
     "copy-abis": "cp artifacts/contracts/Rain1155.sol/Rain1155.json abis/",
     "deploy:rain": "npm run prepare:mumbai && graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-game-engine-mumbai-v1",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
+    "deploy-lite": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/exchange-lite",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/blocks --version-label 1",

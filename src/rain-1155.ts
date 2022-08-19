@@ -35,14 +35,11 @@ export function handleAssetCreated(event: AssetCreated): void {
     // ----------------------------------------- </Fetch  data from IPFS>
 
     let _currencies = event.params.asset_.currencies;
-    let _types = event.params.asset_.currencyTypes;
     let currencies: string[] = [];
-    let tokenId: BigInt;
     let count = 0;
 
     for (let i = 0; i < _currencies.length; i++) {
-        tokenId = _types[count] === ZERO_BI ? ZERO_BI : _types[++count]
-        let currency = getCurrency(_currencies[i], getERCType(_currencies[i]), tokenId);
+        let currency = getCurrency(_currencies.token[i], _currencies.tokenType[i], _currencies.tokenId[i]);
         if (currencies) currencies.push(currency.id);
         count++;
     }
