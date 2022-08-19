@@ -1,12 +1,12 @@
 type Rain1155 @entity {
   "Rain1155 address"
-  id: ID!#{Rain1155.address}
+  id: ID! #{Rain1155.address}
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
   "List of Assets"
   assets: [Asset!] # Add Asset.id from AssetCreated event
   "List of Holders of Assets"
-  holders: [Holder!]   # Add new Holder from TransferSingle or TransferBatch event
+  holders: [Holder!] # Add new Holder from TransferSingle or TransferBatch event
   "Block number at which Rain1155 contract deployed"
   deployBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
@@ -14,8 +14,8 @@ type Rain1155 @entity {
 }
 
 type Asset @entity {
-  #{Rain1155.address}-{event.params._asset._assetId} 
-  id: ID! #{Rain1155.address}-{event.params._asset._assetId} 
+  #{Rain1155.address}-{event.params._asset._assetId}
+  id: ID! #{Rain1155.address}-{event.params._asset._assetId}
   "Name of asset"
   name: String! # event.params._name
   "Description of Asset"
@@ -26,6 +26,8 @@ type Asset @entity {
   recipient: Bytes! # event.params._asset.creator
   "Id of LootBox that contains this asset"
   lootBoxID: BigInt! # event.params._asset.lootBoxId
+  "script of the asset"
+  vmStateConfig: VMStateConfig! # event.params._asset.vmStateConfig
   "Script for price"
   # priceConfig: PriceConfig! # event.params._asset._priceConfig
   # "Script for mintConditions"
@@ -70,4 +72,14 @@ type Currency @entity {
   symbol: String
   decimals: Int
   tokenId: BigInt
+}
+
+# create from AssetCreated event
+type VMStateConfig @entity {
+  #{Rain1155.address}-{event.params._asset._assetId}
+  id: ID!
+  # event.params._asset._priceConfig.sources
+  sources: [Bytes!]!
+  # event.params._asset._priceConfig.constants
+  constants: [BigInt!]!
 }

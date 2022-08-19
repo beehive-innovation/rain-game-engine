@@ -94,6 +94,11 @@ let
     hardhat test
   '';
 
+  test-contract = pkgs.writeShellScriptBin "test-contract" ''
+    hardhat compile
+    hardhat node & yarn test
+  '';
+
   docgen = pkgs.writeShellScriptBin "docgen" ''
     rm -rf docs/api && npm run docgen
   '';
@@ -191,6 +196,7 @@ pkgs.stdenv.mkDerivation {
     prepublish
     solt-the-earth
     flush-all
+    test-contract
   ];
 
   shellHook = ''

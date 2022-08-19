@@ -42,25 +42,25 @@ export function getERCType(address: Bytes): ERCType {
 }
 
 
-export function getCurrency(address: Bytes, type: BigInt, tokenId: BigInt): Currency{
+export function getCurrency(address: Bytes, type: ERCType, tokenId: BigInt = ZERO_BI): Currency{
     let currency = Currency.load(address.toHex());
     if(!currency){
         currency = new Currency(address.toHex());
         currency.address = address;
-        if(type == ZERO_BI){
+        if(type == ERCType.ERC20){
             let erc20 = ERC20.bind(Address.fromBytes(address));
             currency.type = "ERC20";
             currency.name = erc20.name();
             currency.symbol = erc20.symbol();
             currency.decimals = erc20.decimals();
             currency.save()
-        }else if(type == ONE_BI){
+        }else if(type == ERCType.ERC721){
             let erc721 = ERC721.bind(Address.fromBytes(address));
             currency.type = "ERC721";
             currency.name = erc721.name();
             currency.symbol = erc721.symbol();
             currency.save();
-        }else if (type == ONE_BI.plus(ONE_BI)){
+        }else if (type == ERCType.ERC1155){
             let erc1155 = Rain1155.bind(Address.fromBytes(address));
             currency.type = "ERC1155";
             // let i = 0;
@@ -70,11 +70,11 @@ export function getCurrency(address: Bytes, type: BigInt, tokenId: BigInt): Curr
             //     index--;
             // }
             if (tokenId.equals(ZERO_BI)){
-            log.info("TokenID : {}", [tokenId.toString()])
-            // let uri = erc1155.try_uri(tokenId);
-            // if(!uri.reverted) currency.tokenURI = uri.value;
-            // else currency.tokenURI = `TokenId ${tokenId} may not exists now`;
-            currency.tokenId = tokenId;
+                log.info("TokenID : {}", [tokenId.toString()])
+                // let uri = erc1155.try_uri(tokenId);
+                // if(!uri.reverted) currency.tokenURI = uri.value;
+                // else currency.tokenURI = `TokenId ${tokenId} may not exists now`;
+                currency.tokenId = tokenId;
             }
             currency.save();
         }else{

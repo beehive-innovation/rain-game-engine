@@ -7,13 +7,7 @@ import {
   Rain1155,
   Rain1155ConfigStruct,
 } from "../../typechain/Rain1155";
-import {
-  BN,
-  concat,
-  eighteenZeros,
-  fetchFile,
-  op,
-} from "../utils";
+import { BN, concat, eighteenZeros, fetchFile, op } from "../utils";
 import {
   BNB,
   CARS,
@@ -74,8 +68,7 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [USDT.address],
-          tokenType: [0],
-          tokenId: [0],
+          tokenId: [],
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -127,7 +120,6 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [PLANES.address],
-          tokenType: [1],
           tokenId: [10],
         },
         tokenURI: "TOKEN_URI",
@@ -206,8 +198,7 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [BNB.address, SOL.address, PLANES.address, CARS.address],
-          tokenType: [0, 0, 1, 1],
-          tokenId: [0, 0, 2, 4],
+          tokenId: [2, 4],
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,

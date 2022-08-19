@@ -31,7 +31,6 @@ async function main() {
     const pathConfigLocal = path.resolve(__dirname, `../config/${hre.network.name}.json`);
     writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-
     await sleep(30);
 
     console.log("Verifying smartcontract")

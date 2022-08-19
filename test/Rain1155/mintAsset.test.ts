@@ -94,8 +94,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -142,7 +141,7 @@ describe("Mint Asset test", async function () {
       "TransferSingle",
       rain1155
     )) as TransferSingleEvent["args"];
-      
+
     assert(assetUnitsBought.eq(assetUnits), "Invalid Asset units bought");
     assert(id.eq(asset.id), "Invalid Asset ID bought");
 
@@ -187,8 +186,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -249,8 +247,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -314,8 +311,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -416,8 +412,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address, TOKEN1155.address],
-        tokenType: [0, 1],
-        tokenId: [0, tokenIdToHold],
+        tokenId: [tokenIdToHold],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -447,7 +442,10 @@ describe("Mint Asset test", async function () {
 
     // Transferring token
     await USDT_.transfer(buyer.address, USDTassetCost);
-    await TOKEN1155.connect(buyer).mintTokens(tokenIdToHold, TOKEN1155assetCost);
+    await TOKEN1155.connect(buyer).mintTokens(
+      tokenIdToHold,
+      TOKEN1155assetCost
+    );
 
     // Approving token
     await USDT_.connect(buyer).approve(rain1155.address, USDTassetCost);
@@ -455,8 +453,14 @@ describe("Mint Asset test", async function () {
     let recipientUSDT_BalanceBefore = await USDT_.balanceOf(recipient.address);
 
     await TOKEN1155.connect(buyer).setApprovalForAll(rain1155.address, true);
-    let buyerTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(buyer.address, tokenIdToHold);
-    let recipientTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(recipient.address, tokenIdToHold);
+    let buyerTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(
+      buyer.address,
+      tokenIdToHold
+    );
+    let recipientTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(
+      recipient.address,
+      tokenIdToHold
+    );
 
     // Minting token
     const mintAssetTx = await rain1155
@@ -479,21 +483,33 @@ describe("Mint Asset test", async function () {
       buyerUSDT_BalanceAfter.eq(buyerUSDT_BalanceBefore.sub(USDTassetCost)),
       "Invalid Buyer USDT Balance after Minting an asset"
     );
-    let buyerTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(buyer.address, tokenIdToHold);
+    let buyerTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(
+      buyer.address,
+      tokenIdToHold
+    );
     assert(
-      buyerTOKEN1155BalanceAfter.eq(buyerTOKEN1155BalanceBefore.sub(TOKEN1155assetCost)),
+      buyerTOKEN1155BalanceAfter.eq(
+        buyerTOKEN1155BalanceBefore.sub(TOKEN1155assetCost)
+      ),
       `Invalid Buyer TOKEN1155 Balance after Minting an asset`
     );
-    
+
     // Asserting the recipient's wallet if the token was received
     let recipientUSDT_BalanceAfter = await USDT_.balanceOf(recipient.address);
     assert(
-      recipientUSDT_BalanceAfter.eq(recipientUSDT_BalanceBefore.add(USDTassetCost)),
+      recipientUSDT_BalanceAfter.eq(
+        recipientUSDT_BalanceBefore.add(USDTassetCost)
+      ),
       "Invalid recipient USDT Balance after Buyer mints an asset"
     );
-    let recipientTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(recipient.address, tokenIdToHold);
+    let recipientTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(
+      recipient.address,
+      tokenIdToHold
+    );
     assert(
-      recipientTOKEN1155BalanceAfter.eq(recipientTOKEN1155BalanceBefore.add(TOKEN1155assetCost)),
+      recipientTOKEN1155BalanceAfter.eq(
+        recipientTOKEN1155BalanceBefore.add(TOKEN1155assetCost)
+      ),
       `Invalid recipient TOKEN1155 Balance after Minting an asset`
     );
 
@@ -504,7 +520,6 @@ describe("Mint Asset test", async function () {
       buyerAssetCount.eq(expectedAssetCount),
       `Invalid Asset Count expected ${expectedAssetCount} actual ${buyerAssetCount}`
     );
-
   });
 
   it("should mint multiple assets with single currency", async () => {
@@ -526,8 +541,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -620,8 +634,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -650,20 +663,19 @@ describe("Mint Asset test", async function () {
     const assetCost = cost[1][0];
 
     // Transferring token
-    await USDT_.transfer(buyer.address, BN("1"+sixZeros));
+    await USDT_.transfer(buyer.address, BN("1" + sixZeros));
     // Approving token
-    await USDT_.connect(buyer).approve(rain1155.address,  BN("1"+sixZeros));
+    await USDT_.connect(buyer).approve(rain1155.address, BN("1" + sixZeros));
     let buyerBalanceBefore = await USDT_.balanceOf(buyer.address);
     let recipientBalanceBefore = await USDT_.balanceOf(recipient.address);
 
     // Minting token
     await assertError(
-      async () => await rain1155
-        .connect(buyer)
-        .mintAssets(asset.id, assetUnits),
-        "ERC20: insufficient allowance",
-        "Asset was minted even after having insufficient balance"
-    )
+      async () =>
+        await rain1155.connect(buyer).mintAssets(asset.id, assetUnits),
+      "ERC20: insufficient allowance",
+      "Asset was minted even after having insufficient balance"
+    );
 
     // Asserting the sender's wallet if the token was transferred
     let buyerBalanceAfter = await USDT_.balanceOf(buyer.address);
@@ -714,8 +726,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address, TOKEN1155.address],
-        tokenType: [0, 1],
-        tokenId: [0, tokenIdToHold],
+        tokenId: [tokenIdToHold],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -745,7 +756,10 @@ describe("Mint Asset test", async function () {
 
     // Transferring token
     await USDT_.transfer(buyer.address, USDTassetCost);
-    await TOKEN1155.connect(buyer).mintTokens(tokenIdToHold, TOKEN1155assetCost);
+    await TOKEN1155.connect(buyer).mintTokens(
+      tokenIdToHold,
+      TOKEN1155assetCost
+    );
 
     // Approving token
     await USDT_.connect(buyer).approve(rain1155.address, USDTassetCost);
@@ -753,8 +767,14 @@ describe("Mint Asset test", async function () {
     let recipientUSDT_BalanceBefore = await USDT_.balanceOf(recipient.address);
 
     await TOKEN1155.connect(buyer).setApprovalForAll(rain1155.address, true);
-    let buyerTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(buyer.address, tokenIdToHold);
-    let recipientTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(recipient.address, tokenIdToHold);
+    let buyerTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(
+      buyer.address,
+      tokenIdToHold
+    );
+    let recipientTOKEN1155BalanceBefore = await TOKEN1155.balanceOf(
+      recipient.address,
+      tokenIdToHold
+    );
 
     // Minting token
     const mintAssetTx = await rain1155
@@ -777,21 +797,33 @@ describe("Mint Asset test", async function () {
       buyerUSDT_BalanceAfter.eq(buyerUSDT_BalanceBefore.sub(USDTassetCost)),
       "Invalid Buyer USDT Balance after Minting an asset"
     );
-    let buyerTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(buyer.address, tokenIdToHold);
+    let buyerTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(
+      buyer.address,
+      tokenIdToHold
+    );
     assert(
-      buyerTOKEN1155BalanceAfter.eq(buyerTOKEN1155BalanceBefore.sub(TOKEN1155assetCost)),
+      buyerTOKEN1155BalanceAfter.eq(
+        buyerTOKEN1155BalanceBefore.sub(TOKEN1155assetCost)
+      ),
       `Invalid Buyer TOKEN1155 Balance after Minting an asset`
     );
-    
+
     // Asserting the recipient's wallet if the token was received
     let recipientUSDT_BalanceAfter = await USDT_.balanceOf(recipient.address);
     assert(
-      recipientUSDT_BalanceAfter.eq(recipientUSDT_BalanceBefore.add(USDTassetCost)),
+      recipientUSDT_BalanceAfter.eq(
+        recipientUSDT_BalanceBefore.add(USDTassetCost)
+      ),
       "Invalid recipient USDT Balance after Buyer mints an asset"
     );
-    let recipientTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(recipient.address, tokenIdToHold);
+    let recipientTOKEN1155BalanceAfter = await TOKEN1155.balanceOf(
+      recipient.address,
+      tokenIdToHold
+    );
     assert(
-      recipientTOKEN1155BalanceAfter.eq(recipientTOKEN1155BalanceBefore.add(TOKEN1155assetCost)),
+      recipientTOKEN1155BalanceAfter.eq(
+        recipientTOKEN1155BalanceBefore.add(TOKEN1155assetCost)
+      ),
       `Invalid recipient TOKEN1155 Balance after Minting an asset`
     );
 
@@ -802,7 +834,6 @@ describe("Mint Asset test", async function () {
       buyerAssetCount.eq(expectedAssetCount),
       `Invalid Asset Count expected ${expectedAssetCount} actual ${buyerAssetCount}`
     );
-
   });
 
   it("should not mint asset if user does not have sufficient approval of token", async () => {
@@ -823,8 +854,7 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenType: [0],
-        tokenId: [0],
+        tokenId: [],
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -853,20 +883,19 @@ describe("Mint Asset test", async function () {
     const assetCost = cost[1][0];
 
     // Transferring token
-    await USDT_.transfer(buyer.address, BN("2"+sixZeros));
+    await USDT_.transfer(buyer.address, BN("2" + sixZeros));
     // Approving token
-    await USDT_.connect(buyer).approve(rain1155.address,  BN("1"+sixZeros));
+    await USDT_.connect(buyer).approve(rain1155.address, BN("1" + sixZeros));
     let buyerBalanceBefore = await USDT_.balanceOf(buyer.address);
     let recipientBalanceBefore = await USDT_.balanceOf(recipient.address);
 
     // Minting token
     await assertError(
-      async () => await rain1155
-        .connect(buyer)
-        .mintAssets(asset.id, assetUnits),
-        "ERC20: insufficient allowance",
-        "Asset was minted even after having insufficient balance"
-    )
+      async () =>
+        await rain1155.connect(buyer).mintAssets(asset.id, assetUnits),
+      "ERC20: insufficient allowance",
+      "Asset was minted even after having insufficient balance"
+    );
 
     // Asserting the sender's wallet if the token was transferred
     let buyerBalanceAfter = await USDT_.balanceOf(buyer.address);
@@ -890,5 +919,4 @@ describe("Mint Asset test", async function () {
       `Invalid Asset Count expected ${expectedAssetCount} actual ${buyerAssetCount}`
     );
   });
-
 });

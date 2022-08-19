@@ -15,6 +15,7 @@
     "deploy:rain": "npm run prepare:mumbai && graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-game-engine-mumbai-v1",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "deploy-lite": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/exchange-lite",
+    "deploy-mumbai-test": "graph deploy --node https://api.thegraph.com/deploy/ rouzwelt/rain1155",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/blocks",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/blocks",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/blocks --version-label 1",
@@ -22,7 +23,7 @@
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "prepare:mumbai": "npm run build && npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
     "deploy:mumbai": "npm run prepare:mumbai && npm run codegen && npm run deploy",
-    "prepare:localhost": "npm run build && npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
+    "prepare:localhost": "npm run build && npx mustache config/test/localhost.json subgraph.template.yaml subgraph.yaml && npm run copy-abis && npm run codegen",
     "deploy:localhost": "npm run prepare:localhost && npm run create-local && npm run deploy-local",
     "deploy-contract": "hardhat run scripts/deploy.ts"
   },

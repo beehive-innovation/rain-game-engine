@@ -8,6 +8,7 @@ import {
   Rain1155ConfigStruct,
 } from "../../typechain/Rain1155";
 import {
+  assertError,
   BN,
   concat,
   eighteenZeros,
@@ -16,7 +17,15 @@ import {
   op,
   ZERO_ADDRESS,
 } from "../utils";
-import { BNB, CARS, deployer, PLANES, signers, SOL, USDT } from "./1_setup.test";
+import {
+  BNB,
+  CARS,
+  deployer,
+  PLANES,
+  signers,
+  SOL,
+  USDT,
+} from "./1_setup.test";
 import { StateConfig, VM } from "rain-sdk";
 let rain1155Config: Rain1155ConfigStruct;
 let config;
@@ -65,8 +74,7 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [USDT.address],
-          tokenType: [0],
-          tokenId: [0],
+          tokenId: [],
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -76,14 +84,9 @@ describe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct cost for single erc20", async () => {
-      const cost = await rain1155.getAssetCost(
-        1,
-        buyer.address,
-        1
-      );
+      const cost = await rain1155.getAssetCost(1, buyer.address, 1);
       expect(cost[0]).to.deep.equals(BN(10));
       expect(cost[1][0]).to.deep.equals(BN("1000000"));
-
     });
   });
 
@@ -125,7 +128,6 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [PLANES.address],
-          tokenType: [1],
           tokenId: [10],
         },
         tokenURI: "TOKEN_URI",
@@ -136,19 +138,14 @@ describe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct currency cost for single erc1155", async () => {
-        const cost = await rain1155.getAssetCost(
-            1,
-            buyer.address,
-            1
-          );
-          expect(cost[0]).to.deep.equals(BN(10));
-          expect(cost[1][0]).to.deep.equals(BN(20));
+      const cost = await rain1155.getAssetCost(1, buyer.address, 1);
+      expect(cost[0]).to.deep.equals(BN(10));
+      expect(cost[1][0]).to.deep.equals(BN(20));
     });
-
   });
 
   describe("multiple ERC20/ERC1155 test", () => {
-    const max_units  = 10;
+    const max_units = 10;
     const BNB_Price = BN(1 + eighteenZeros);
     const SOL_Price = BN(2 + eighteenZeros);
     const PLANES_Price = 5;
@@ -192,7 +189,16 @@ describe("Rain1155 getAssetCost test", () => {
             op(VM.Opcodes.CONSTANT, 7),
           ]),
         ],
-        constants: [max_units, BNB_Price, max_units, SOL_Price, max_units, PLANES_Price, max_units, CARS_Price],
+        constants: [
+          max_units,
+          BNB_Price,
+          max_units,
+          SOL_Price,
+          max_units,
+          PLANES_Price,
+          max_units,
+          CARS_Price,
+        ],
       };
 
       assetConfig = {
@@ -202,8 +208,7 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [BNB.address, SOL.address, PLANES.address, CARS.address],
-          tokenType: [0, 0, 1, 1],
-          tokenId: [0, 0, 2, 4],
+          tokenId: [2, 4],
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -213,11 +218,7 @@ describe("Rain1155 getAssetCost test", () => {
     });
 
     it("Should return correct currency cost for single erc20", async () => {
-      const cost = await rain1155.getAssetCost(
-        1,
-        buyer.address,
-        1
-      );
+      const cost = await rain1155.getAssetCost(1, buyer.address, 1);
 
       expect(cost[0]).deep.equals(max_units);
       expect(cost[1][0]).deep.equals(BNB_Price);
@@ -227,7 +228,7 @@ describe("Rain1155 getAssetCost test", () => {
     });
   });
 
-  describe("No cost test", () => {
+  describe("Invalid currency test", () => {
     before(async () => {
       creator = signers[1];
       recipient = signers[2];
@@ -254,7 +255,7 @@ describe("Rain1155 getAssetCost test", () => {
         sources: [
           concat([op(VM.Opcodes.CONSTANT, 0), op(VM.Opcodes.CONSTANT, 1)]),
         ],
-        constants: [10,0],
+        constants: [10, 0],
       };
 
       assetConfig = {
@@ -264,26 +265,19 @@ describe("Rain1155 getAssetCost test", () => {
         recipient: recipient.address,
         currencies: {
           token: [ZERO_ADDRESS], // any address
-          tokenType: [0],
-          tokenId: [0],
+          tokenId: [],
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
       };
-
-      await rain1155.connect(creator).createNewAsset(assetConfig);
     });
 
-    it("Should return correct cost for no cost", async () => {
-      const cost = await rain1155.getAssetCost(
-        1,
-        buyer.address,
-        1
+    it("Should not allow deployment of an asset which its currencies are not valid", async () => {
+      await assertError(
+        async () => await rain1155.connect(creator).createNewAsset(assetConfig),
+        "cannot estimate gas",
+        "Error user is able to deply and asset that has invalid currencies"
       );
-      expect(cost[0]).to.deep.equals(BN(10));
-      expect(cost[1][0]).to.deep.equals(BN(0));
-
-      await rain1155.connect(buyer).mintAssets(1, 1);
     });
   });
 });

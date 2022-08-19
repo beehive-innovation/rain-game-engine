@@ -54,7 +54,7 @@
 //   admin = signers[6];
 
 //   const StateBuilder = await ethers.getContractFactory("AllStandardOpsStateBuilder");
-  
+
 //   let stateBuilder = await StateBuilder.deploy();
 //   await stateBuilder.deployed();
 
@@ -63,49 +63,49 @@
 //   }
 
 //   const Rain1155 = await ethers.getContractFactory("Rain1155")
-  
+
 //   rain1155 = await Rain1155.deploy(rain1155Config)
 
 //   await rain1155.deployed();
 
-  // const Erc20 = await ethers.getContractFactory("Token");
-  // const stableCoins = await ethers.getContractFactory("ReserveToken");
-  // const Erc721 = await ethers.getContractFactory("ReserveTokenERC721");
-  // const Erc1155 = await ethers.getContractFactory("ReserveTokenERC1155");
-  
-  // USDT = await stableCoins.deploy();
-  // await USDT.deployed();
-  // BNB = await Erc20.deploy("Binance", "BNB");
-  // await BNB.deployed();
-  // SOL = await Erc20.deploy("Solana", "SOL");
-  // await SOL.deployed();
-  // XRP = await Erc20.deploy("Ripple", "XRP");
-  // await XRP.deployed();
+// const Erc20 = await ethers.getContractFactory("Token");
+// const stableCoins = await ethers.getContractFactory("ReserveToken");
+// const Erc721 = await ethers.getContractFactory("ReserveTokenERC721");
+// const Erc1155 = await ethers.getContractFactory("ReserveTokenERC1155");
 
-  // BAYC = await Erc721.deploy("Boared Ape Yatch Club", "BAYC");
-  // await BAYC.deployed()
+// USDT = await stableCoins.deploy();
+// await USDT.deployed();
+// BNB = await Erc20.deploy("Binance", "BNB");
+// await BNB.deployed();
+// SOL = await Erc20.deploy("Solana", "SOL");
+// await SOL.deployed();
+// XRP = await Erc20.deploy("Ripple", "XRP");
+// await XRP.deployed();
 
-  // CARS = await Erc1155.deploy();
-  // await CARS.deployed();
-  // PLANES = await Erc1155.deploy();
-  // await PLANES.deployed();
-  // SHIPS = await Erc1155.deploy();
-  // await SHIPS.deployed();
+// BAYC = await Erc721.deploy("Boared Ape Yatch Club", "BAYC");
+// await BAYC.deployed()
 
-  // rTKN = await Erc20.deploy("Rain Token", "rTKN");
-  // await rTKN.deployed();
+// CARS = await Erc1155.deploy();
+// await CARS.deployed();
+// PLANES = await Erc1155.deploy();
+// await PLANES.deployed();
+// SHIPS = await Erc1155.deploy();
+// await SHIPS.deployed();
 
-  // const pathExampleConfig = path.resolve(__dirname, "../config/localhost.json");
-  // const config = JSON.parse(fetchFile(pathExampleConfig));
+// rTKN = await Erc20.deploy("Rain Token", "rTKN");
+// await rTKN.deployed();
 
-  // config.network = "localhost";
+// const pathExampleConfig = path.resolve(__dirname, "../config/localhost.json");
+// const config = JSON.parse(fetchFile(pathExampleConfig));
 
-  // config.rain1155 = rain1155.address;
-  // config.rain1155Block = rain1155.deployTransaction.blockNumber;
+// config.network = "localhost";
 
-  // console.log("Config : ", JSON.stringify(config, null, 2));
-  // const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-  // writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
+// config.rain1155 = rain1155.address;
+// config.rain1155Block = rain1155.deployTransaction.blockNumber;
+
+// console.log("Config : ", JSON.stringify(config, null, 2));
+// const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
+// writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
 //   try {
 //     exec(`npm run deploy:localhost`);
@@ -127,33 +127,29 @@
 //     // console.log(USDT.address, BNB.address, SOL.address, XRP.address)
 //   });
 
-
-
 //   it("Should create asset from creator.", async function () {
 //     /// Minting before creating assets
 //     await PLANES.connect(buyer1).mintTokens(BN("15"), 5)
 //     await SHIPS.connect(buyer1).mintTokens(BN("1"), 11)
-
-
 
 //     const blockCondition = 15
 
 //     const vmStateConfig = {
 //       constants: [10, BN("1" + eighteenZeros), 10, BN("25" + eighteenZeros), 9, 10, 9, 5],
 //       sources: [
-        // concat([
-        //   op(AllStandardOps.CONSTANT, 0),
-        //   op(AllStandardOps.CONSTANT, 1),
+// concat([
+//   op(AllStandardOps.CONSTANT, 0),
+//   op(AllStandardOps.CONSTANT, 1),
 
-        //   op(AllStandardOps.CONSTANT, 2),
-        //   op(AllStandardOps.CONSTANT, 3),
+//   op(AllStandardOps.CONSTANT, 2),
+//   op(AllStandardOps.CONSTANT, 3),
 
-        //   op(AllStandardOps.CONSTANT, 4),
-        //   op(AllStandardOps.CONSTANT, 5),
+//   op(AllStandardOps.CONSTANT, 4),
+//   op(AllStandardOps.CONSTANT, 5),
 
-        //   op(AllStandardOps.CONSTANT, 6),
-        //   op(AllStandardOps.CONSTANT, 7),
-        // ])
+//   op(AllStandardOps.CONSTANT, 6),
+//   op(AllStandardOps.CONSTANT, 7),
+// ])
 //       ]
 //     }
 
@@ -207,10 +203,10 @@
 
 //     await USDT.connect(buyer1).approve(rain1155.address, USDTPrice);
 //     await BNB.connect(buyer1).approve(rain1155.address, BNBPrice);
-    
+
 //     await CARS.connect(buyer1).setApprovalForAll(rain1155.address, true);
 //     await PLANES.connect(buyer1).setApprovalForAll(rain1155.address, true);
-    
+
 //     await rain1155.connect(buyer1).mintAssets(1,1);
 
 //     expect(await rain1155.balanceOf(buyer1.address, 1)).to.deep.equals(BN("1"))
@@ -219,7 +215,7 @@
 //     expect(await BNB.balanceOf(creator.address)).to.deep.equals(BN("25" + eighteenZeros))
 //     expect(await CARS.balanceOf(creator.address, 5)).to.deep.equals(BN("10"))
 //     expect(await PLANES.balanceOf(creator.address, 15)).to.deep.equals(BN("5"))
-    
+
 //     expect(await USDT.balanceOf(buyer1.address)).to.deep.equals(BN("0" + eighteenZeros))
 //     expect(await BNB.balanceOf(buyer1.address)).to.deep.equals(BN("0" + eighteenZeros))
 //     expect(await CARS.balanceOf(buyer1.address, 5)).to.deep.equals(BN("0"))

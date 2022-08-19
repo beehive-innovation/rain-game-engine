@@ -1,13 +1,13 @@
 import { ipfs, BigInt } from "@graphprotocol/graph-ts";
-import { Asset, AssetsOwned, Holder, Rain1155 } from "../generated/schema";
+import { Asset, AssetsOwned, Currency, Holder, Rain1155, VMStateConfig } from "../generated/schema";
 import {
   ApprovalForAll,
   AssetCreated,
   Initialize,
   TransferBatch,
-  TransferSingle
+  TransferSingle,
 } from "../generated/Rain1155/Rain1155"
-import { getCurrency, getERCType, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
+import { ERCType, getCurrency, getERCType, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "./utils";
 
 export function handleApprovalForAll(event: ApprovalForAll): void {}
 
@@ -34,24 +34,34 @@ export function handleAssetCreated(event: AssetCreated): void {
     // }
     // ----------------------------------------- </Fetch  data from IPFS>
 
-    let _currencies = event.params.asset_.currencies;
+    let _currencies = event.params.asset_.currencies.token;
     let currencies: string[] = [];
+    let tokenId: BigInt
     let count = 0;
 
     for (let i = 0; i < _currencies.length; i++) {
-        let currency = getCurrency(_currencies.token[i], _currencies.tokenType[i], _currencies.tokenId[i]);
-        if (currencies) currencies.push(currency.id);
-        count++;
+        let currency: Currency;
+        let tokenType = getERCType(_currencies[i]);
+
+        if (tokenType === ERCType.ERC20) {
+            currency = getCurrency(_currencies[i], tokenType);
+        }
+        else {
+            tokenId = event.params.asset_.currencies.tokenId[count]
+            currency = getCurrency(_currencies[i], tokenType, tokenId);
+            count++;
+        }
+        if (currencies) currencies.push(currency.id);       
     }
 
     asset.currencies = currencies;
 
-    // let vmStateConfig = new VmStateConfig(event.address.toHex() + "-" + event.params.assetId_.toString())
-    // vmStateConfig.constants = event.params.asset_.vmStateConfig.constants;
-    // vmStateConfig.sources = event.params.asset_.vmStateConfig.sources;
-    // vmStateConfig.save();
+    let vmStateConfig = new VMStateConfig(event.address.toHex() + "-" + event.params.assetId_.toString())
+    vmStateConfig.constants = event.params.asset_.vmStateConfig.constants;
+    vmStateConfig.sources = event.params.asset_.vmStateConfig.sources;
+    vmStateConfig.save();
 
-    // asset.vmStateConfig = vmStateConfig.id;
+    asset.vmStateConfig = vmStateConfig.id;
 
     asset.save()
 
