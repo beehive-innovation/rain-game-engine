@@ -95,6 +95,7 @@ let
   '';
 
   test-contract = pkgs.writeShellScriptBin "test-contract" ''
+    while ! yarn install --network-timeout 1000000 --skip-integrity-check --network-concurrency 1; do echo --- ; done
     hardhat compile
     hardhat node & yarn test
   '';
