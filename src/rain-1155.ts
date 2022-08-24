@@ -20,19 +20,19 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.recipient = event.params.asset_.recipient;
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
-    // asset.tokenURI = event.params.asset_.tokenURI;
+    asset.tokenURI = event.params.asset_.tokenURI;
 
-    // ----------------------------------------- <Fetch  data from IPFS>
-    // let ipfsHash = event.params.asset_.tokenURI.split('/').pop()!;
-    // let ipfsMetadata = ipfs.cat(ipfsHash);
-    // if (ipfsMetadata) {
-    //     //  Add JSON object as a string
-    //     asset.metadata = ipfsMetadata.toString();
-    // }else
-    // {        
-    //     asset.metadata = "";
-    // }
-    // ----------------------------------------- </Fetch  data from IPFS>
+    //----------------------------------------- <Fetch  data from IPFS>
+    let ipfsHash = event.params.asset_.tokenURI.split('/').pop()!;
+    let ipfsMetadata = ipfs.cat(ipfsHash);
+    if (ipfsMetadata) {
+        //  Add JSON object as a string
+        asset.metadata = ipfsMetadata.toString();
+    }else
+    {        
+        asset.metadata = "";
+    }
+    //----------------------------------------- </Fetch  data from IPFS>
 
     let _currencies = event.params.asset_.currencies.token;
     let currencies: string[] = [];
@@ -184,5 +184,3 @@ export function handleTransferSingle(event: TransferSingle): void {
       rain1155.save();
   }
 }
-// export function handleURI(event: URI): void {
-// }

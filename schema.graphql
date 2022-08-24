@@ -39,9 +39,9 @@ type Asset @entity {
   "Timestamp at which Rain1155 contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
   # "TokenURI of Asset"
-  # tokenURI: String! # event.params._asset.tokenURI
+  tokenURI: String! # event.params._asset.tokenURI
   # "Asset Metadata"
-  # metadata: String!
+  metadata: String!
 }
 
 # Create on every TransferSingle or TransferBatch event
