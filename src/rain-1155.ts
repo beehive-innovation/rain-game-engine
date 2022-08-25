@@ -1,4 +1,4 @@
-import { ipfs, BigInt } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 import { Asset, AssetsOwned, Currency, Holder, Rain1155, VMStateConfig } from "../generated/schema";
 import {
   ApprovalForAll,
@@ -21,18 +21,6 @@ export function handleAssetCreated(event: AssetCreated): void {
     asset.creationBlock = event.block.number;
     asset.creationTimestamp = event.block.timestamp;
     asset.tokenURI = event.params.asset_.tokenURI;
-
-    //----------------------------------------- <Fetch  data from IPFS>
-    let ipfsHash = event.params.asset_.tokenURI.split('/').pop()!;
-    let ipfsMetadata = ipfs.cat(ipfsHash);
-    if (ipfsMetadata) {
-        //  Add JSON object as a string
-        asset.metadata = ipfsMetadata.toString();
-    }else
-    {        
-        asset.metadata = "";
-    }
-    //----------------------------------------- </Fetch  data from IPFS>
 
     let _currencies = event.params.asset_.currencies.token;
     let currencies: string[] = [];
