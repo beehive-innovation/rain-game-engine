@@ -133,7 +133,6 @@ contract Rain1155 is ERC1155Supply, RainVM {
             config_.vmStateConfig,
             bounds_
         );
-
         assets[totalAssets] = AssetDetails(
             config_.lootBoxId,
             totalAssets,
@@ -234,11 +233,11 @@ contract Rain1155 is ERC1155Supply, RainVM {
     }
 
     function getCurrencyType(address token_) internal view returns (uint256) {
-        try ERC721(address(uint160(token_))).supportsInterface(0x80ac58cd) returns (bool) {
+        try ERC1155(address(uint160(token_))).supportsInterface(0xd9b67a26) returns (bool) {
             return 1;
         } catch  {
-            try ERC1155(address(uint160(token_))).supportsInterface(0xd9b67a26) returns (bool) {
-                return 1;
+            try ERC721(address(uint160(token_))).supportsInterface(0x80ac58cd) returns (bool) {
+                revert("ERC721_Contract");
             } catch  {
                 return 0;
             }

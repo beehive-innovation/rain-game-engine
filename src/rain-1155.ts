@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { Asset, AssetsOwned, Currency, Holder, Rain1155, VMStateConfig } from "../generated/schema";
 import {
   ApprovalForAll,
@@ -30,13 +30,12 @@ export function handleAssetCreated(event: AssetCreated): void {
     for (let i = 0; i < _currencies.length; i++) {
         let currency: Currency;
         let tokenType = getERCType(_currencies[i]);
-
         if (tokenType === ERCType.ERC20) {
-            currency = getCurrency(_currencies[i], tokenType);
+            currency = getCurrency(_currencies[i], tokenType, event.params.assetId_);
         }
         else {
             tokenId = event.params.asset_.currencies.tokenId[count]
-            currency = getCurrency(_currencies[i], tokenType, tokenId);
+            currency = getCurrency(_currencies[i], tokenType, event.params.assetId_, tokenId);
             count++;
         }
         if (currencies) currencies.push(currency.id);       

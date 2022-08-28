@@ -1,5 +1,5 @@
 {
-  "include": ["./test", "./scripts", "src"],
+  "include": ["./test", "./scripts", "./src"],
   "exclude": [
     "node_modules/*",
     "@graphprotocol/graph-ts/types/tsconfig.base.json"

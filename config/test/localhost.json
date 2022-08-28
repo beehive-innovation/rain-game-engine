@@ -1,6 +1,6 @@
 {
   "network": "localhost",
-  "vmStateBuilder": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "rain1155": "0x9A676e781A523b5d0C0e43731313A708CB607508",
-  "rain1155Block": 19
+  "vmStateBuilder": "0xccf1769D8713099172642EB55DDFFC0c5A444FE9",
+  "rain1155": "0x8fC8CFB7f7362E44E472c690A6e025B80E406458",
+  "rain1155Block": 386
 }
