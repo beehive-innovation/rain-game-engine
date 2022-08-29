@@ -24,11 +24,6 @@ export function getERCType(address: Bytes): ERCType {
     let name = erc20.try_name()
     let symbol =  erc20.try_symbol()
     let decimals =  erc20.try_decimals()
-    // if(!erc721InterfaceId.reverted){
-    //     if(erc721InterfaceId.value == true){
-    //         return ERCType.ERC721;
-    //     }
-    // }
     if (!erc1155InterfaceId.reverted){
         if(erc1155InterfaceId.value == true){
             return ERCType.ERC1155;
@@ -59,6 +54,8 @@ export function getCurrency(address: Bytes, type: ERCType, assetId: BigInt, toke
             let erc1155 = Rain1155.bind(Address.fromBytes(address));
             currency.type = "ERC1155";
             currency.tokenId = tokenId;
+            let tokenUri = erc1155.try_uri(tokenId);
+            currency.tokeURI = (!tokenUri.reverted) ? tokenUri.value : "Token";
             currency.save();
         }else{
             currency.type = "UNKNOWN";

@@ -70,6 +70,7 @@ type Currency @entity {
   symbol: String
   decimals: Int
   tokenId: BigInt
+  tokeURI: String
 }
 
 # create from AssetCreated event
