@@ -4,7 +4,7 @@ type Rain1155 @entity {
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
   "List of Assets"
-  assets: [Asset!] # Add Asset.id from AssetCreated event
+  assets: [Asset!] @derivedFrom(field: "rain1155")# Add Asset.id from AssetCreated event
   "List of Holders of Assets"
   holders: [Holder!] # Add new Holder from TransferSingle or TransferBatch event
   "Block number at which Rain1155 contract deployed"
@@ -17,6 +17,7 @@ type Asset @entity {
   #{Rain1155.address}-{event.params._asset._assetId}
   id: ID! #{Rain1155.address}-{event.params._asset._assetId}
   "Name of asset"
+  rain1155: Rain1155!
   name: String! # event.params._name
   "Description of Asset"
   description: String! # event.params._description
@@ -40,6 +41,8 @@ type Asset @entity {
   creationTimestamp: BigInt! # event.block.timestamp
   # "TokenURI of Asset"
   tokenURI: String! # event.params._asset.tokenURI
+  sales: [Sale!] @derivedFrom(field: "asset")
+  holders: [Holder!]
 }
 
 # Create on every TransferSingle or TransferBatch event
@@ -70,7 +73,7 @@ type Currency @entity {
   symbol: String
   decimals: Int
   tokenId: BigInt
-  tokeURI: String
+  tokenURI: String
 }
 
 # create from AssetCreated event
@@ -81,4 +84,12 @@ type VMStateConfig @entity {
   sources: [Bytes!]!
   # event.params._asset._priceConfig.constants
   constants: [BigInt!]!
+}
+
+type Sale @entity {
+  id: ID!
+  asset: Asset!
+  quantity: BigInt!
+  timestamp: BigInt!
+  to: Bytes!
 }

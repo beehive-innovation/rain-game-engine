@@ -1,8 +1,8 @@
-import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../generated/Rain1155/ERC20";
 import { ERC721 } from "../generated/Rain1155/ERC721";
 import { Rain1155 } from "../generated/Rain1155/Rain1155";
-import { Currency } from "../generated/schema";
+import { Asset, Currency } from "../generated/schema";
 
 
 export let ZERO_BI = BigInt.fromI32(0)
@@ -46,16 +46,23 @@ export function getCurrency(address: Bytes, type: ERCType, assetId: BigInt, toke
         if(type == ERCType.ERC20){
             let erc20 = ERC20.bind(Address.fromBytes(address));
             currency.type = "ERC20";
-            currency.name = erc20.name();
+            currency.name = erc20.name();   
             currency.symbol = erc20.symbol();
             currency.decimals = erc20.decimals();
             currency.save()
         }else if (type == ERCType.ERC1155){
-            let erc1155 = Rain1155.bind(Address.fromBytes(address));
             currency.type = "ERC1155";
             currency.tokenId = tokenId;
-            let tokenUri = erc1155.try_uri(tokenId);
-            currency.tokeURI = (!tokenUri.reverted) ? tokenUri.value : "Token";
+            if(address == dataSource.address()){
+                log.info("TEST {} - {}", [dataSource.address().toHex(), Address.fromBytes(address).toHex()])
+                let asset = Asset.load(dataSource.address().toHex() + "-" + tokenId.toString());
+                currency.tokenURI = (asset)? asset.tokenURI : `Token ${tokenId} not Minted yet`;
+            }
+            else{
+                let erc1155 = Rain1155.bind(Address.fromBytes(address));
+                let tokenUri = erc1155.try_uri(tokenId);
+                currency.tokenURI = (!tokenUri.reverted)? tokenUri.value : `Token ${tokenId} not Minted yet`;
+            }
             currency.save();
         }else{
             currency.type = "UNKNOWN";
