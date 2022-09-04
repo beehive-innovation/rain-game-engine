@@ -6,7 +6,7 @@ import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
-
+import "@nomiclabs/hardhat-web3";
 dotenv.config();
 
 function createLocalHostConfig() {
@@ -74,15 +74,15 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       url: `https://polygon-mumbai.infura.io/v3/${process.env.API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
-    }
+      accounts: [process.env.PRIVATE_KEY],
+    },
   },
   mocha: {
     timeout: 600000,
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY
-  }
+    apiKey: process.env.POLYGONSCAN_API_KEY,
+  },
 };
 
 export default config;

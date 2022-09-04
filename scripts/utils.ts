@@ -17,7 +17,6 @@ export function writeFile(_path: string, file: any): void {
   }
 }
 
-
 export function saveGameAssetsFactory(contract: Contract): void {
   const config = {
     network: hre.network.name,

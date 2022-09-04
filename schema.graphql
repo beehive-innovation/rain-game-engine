@@ -1,12 +1,12 @@
 type Rain1155 @entity {
   "Rain1155 address"
-  id: ID!#{Rain1155.address}
+  id: ID! #{Rain1155.address}
   "total numbers of assets created"
   totalAssets: BigInt! # Increment by 1 after each new assets creation
   "List of Assets"
-  assets: [Asset!] # Add Asset.id from AssetCreated event
+  assets: [Asset!] @derivedFrom(field: "rain1155")# Add Asset.id from AssetCreated event
   "List of Holders of Assets"
-  holders: [Holder!]   # Add new Holder from TransferSingle or TransferBatch event
+  holders: [Holder!] # Add new Holder from TransferSingle or TransferBatch event
   "Block number at which Rain1155 contract deployed"
   deployBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
@@ -14,60 +14,35 @@ type Rain1155 @entity {
 }
 
 type Asset @entity {
-  #{Rain1155.address}-{event.params._asset._assetId} 
-  id: ID! #{Rain1155.address}-{event.params._asset._assetId} 
+  #{Rain1155.address}-{event.params._asset._assetId}
+  id: ID! #{Rain1155.address}-{event.params._asset._assetId}
   "Name of asset"
+  rain1155: Rain1155!
   name: String! # event.params._name
   "Description of Asset"
-  description: String! # event.params._descciption
+  description: String! # event.params._description
   "Id of asset"
   assetId: BigInt! # event.params._asset._assetId
   "Creator of this asset"
   recipient: Bytes! # event.params._asset.creator
   "Id of LootBox that contains this asset"
   lootBoxID: BigInt! # event.params._asset.lootBoxId
+  "script of the asset"
+  vmStateConfig: VMStateConfig! # event.params._asset.vmStateConfig
   "Script for price"
-  priceConfig: PriceConfig! # event.params._asset._priceConfig
-  "Script for mintConditions"
-  canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
-  "List of ERC20 and ERC1155 tokens used for payment"
+  # priceConfig: PriceConfig! # event.params._asset._priceConfig
+  # "Script for mintConditions"
+  # canMintConfig: CanMintConfig! # event.params._asset._canMintConfig
+  # "List of ERC20 and ERC1155 tokens used for payment"
   currencies: [Currency!]! # event.params._asset.currencies
   "Block number at which Rain1155 contract deployed"
   creationBlock: BigInt! # event.block.number
   "Timestamp at which Rain1155 contract deployed"
   creationTimestamp: BigInt! # event.block.timestamp
-  "TokenURI of Asset"
+  # "TokenURI of Asset"
   tokenURI: String! # event.params._asset.tokenURI
-  "Asset Metadata"
-  metadata: String!
-}
-
-# create from AssetCreated event
-type PriceConfig @entity {
-  #{Rain1155.address}-{event.params._asset._assetId}
-  id: ID!
-  # event.params._asset._priceConfig.sources
-  sources: [Bytes!]!
-  # event.params._asset._priceConfig.constants
-  constants: [BigInt!]!
-  # event.params._asset._priceConfig.stackLength
-  stackLength: BigInt!
-  # event.params._asset._priceConfig.argumentsLength
-  argumentsLength: BigInt!
-}
-
-# create from AssetCreated event
-type CanMintConfig @entity {
-  #{Rain1155.address}-{event.params._asset._assetId}
-  id: ID!
-  # event.params._asset._priceConfig.sources
-  sources: [Bytes!]!
-  # event.params._asset._priceConfig.constants
-  constants: [BigInt!]!
-  # event.params._asset._priceConfig.stackLength
-  stackLength: BigInt!
-  # event.params._asset._priceConfig.argumentsLength
-  argumentsLength: BigInt!
+  sales: [Sale!] @derivedFrom(field: "asset")
+  holders: [Holder!]
 }
 
 # Create on every TransferSingle or TransferBatch event
@@ -82,12 +57,12 @@ type Holder @entity {
 type AssetsOwned @entity {
   id: ID! #{Rain1155.address}-{Receiver}-{event.params.id}
   "Asset entity"
-  asset: Asset! # Asset that is minted or transferd
+  asset: Asset! # Asset that is minted or transferred
   "Id of asset"
   assetId: BigInt! # Id od that Asset
   "Amount of this asset owned"
   count: BigInt! # TotalNumber of assets Owned of AssetId
-  # Increament for every AssetId.
+  # Increment for every AssetId.
 }
 
 type Currency @entity {
@@ -99,4 +74,22 @@ type Currency @entity {
   decimals: Int
   tokenId: BigInt
   tokenURI: String
+}
+
+# create from AssetCreated event
+type VMStateConfig @entity {
+  #{Rain1155.address}-{event.params._asset._assetId}
+  id: ID!
+  # event.params._asset._priceConfig.sources
+  sources: [Bytes!]!
+  # event.params._asset._priceConfig.constants
+  constants: [BigInt!]!
+}
+
+type Sale @entity {
+  id: ID!
+  asset: Asset!
+  quantity: BigInt!
+  timestamp: BigInt!
+  to: Bytes!
 }

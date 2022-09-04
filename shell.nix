@@ -94,6 +94,12 @@ let
     hardhat test
   '';
 
+  test-contract = pkgs.writeShellScriptBin "test-contract" ''
+    while ! yarn install --network-timeout 1000000 --skip-integrity-check --network-concurrency 1; do echo --- ; done
+    hardhat compile
+    hardhat node & yarn test
+  '';
+
   docgen = pkgs.writeShellScriptBin "docgen" ''
     rm -rf docs/api && npm run docgen
   '';
@@ -168,6 +174,7 @@ pkgs.stdenv.mkDerivation {
   buildInputs = [
     pkgs.nixpkgs-fmt
     pkgs.yarn
+    pkgs.nodePackages.npm
     pkgs.nodejs-16_x
     pkgs.slither-analyzer
     compile
@@ -190,11 +197,12 @@ pkgs.stdenv.mkDerivation {
     prepublish
     solt-the-earth
     flush-all
+    test-contract
   ];
 
   shellHook = ''
     export PATH=$( npm bin ):$PATH
     # keep it fresh
-    npm install
+    yarn install
   '';
 }
