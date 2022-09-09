@@ -85,7 +85,8 @@ describe("Create Asset test", () => {
       recipient: recipient.address,
       currencies: {
         token: [USDT.address, BNB.address, CARS.address, PLANES.address],
-        tokenId: [5, 15],
+        tokenId: [0, 0, 5, 15],
+        tokenType: [0, 0, 1, 1]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -106,8 +107,8 @@ describe("Create Asset test", () => {
     let token = assetConfig.currencies.token;
     let token_ = asset.currencies.token;
 
-    // let tokenType = assetConfig.currencies.tokenType
-    // let tokenType_ = asset.currencies.tokenType
+    let tokenType = assetConfig.currencies.tokenType;
+    let tokenType_ = asset.currencies.tokenType;
 
     let tokenId = assetConfig.currencies.tokenId;
     let tokenId_ = asset.currencies.tokenId;
@@ -120,7 +121,7 @@ describe("Create Asset test", () => {
     expect(asset.vmStatePointer).to.not.null;
 
     expect(token_).to.deep.equals(token);
-    // expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
+    expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
     expect(tokenId_).to.deep.equals(tokenId.map((id) => BN(id)));
 
     const [lootBoxId, id, vmStateConfig, vmStatePointer, currencies] =
@@ -132,12 +133,12 @@ describe("Create Asset test", () => {
 
     [
       token,
-      // tokenType,
+      tokenType,
       tokenId,
     ] = currencies;
 
     expect(token_).to.deep.equals(token);
-    // expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
+    expect(tokenType_).to.deep.equals(tokenType.map(type => BN(type)));
     expect(tokenId_).to.deep.equals(tokenId.map((id) => BN(id)));
   });
 });

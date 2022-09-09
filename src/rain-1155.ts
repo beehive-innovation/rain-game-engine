@@ -44,22 +44,23 @@ export function handleAssetCreated(event: AssetCreated): void {
   let _currencies = event.params.asset_.currencies.token;
   let currencies: string[] = [];
   let tokenId: BigInt;
-  let count = 0;
 
   for (let i = 0; i < _currencies.length; i++) {
     let currency: Currency;
-    let tokenType = getERCType(_currencies[i]);
+    let tokenType = 
+      event.params.asset_.currencies.tokenType[i] == ZERO_BI 
+        ? ERCType.ERC20 
+        : ERCType.ERC1155;
     if (tokenType === ERCType.ERC20) {
-      currency = getCurrency(_currencies[i], tokenType, event.params.assetId_);
+      currency = getCurrency(_currencies[i], tokenType, i.toString());
     } else {
-      tokenId = event.params.asset_.currencies.tokenId[count];
+      tokenId = event.params.asset_.currencies.tokenId[i];
       currency = getCurrency(
         _currencies[i],
         tokenType,
-        event.params.assetId_,
+        i.toString(),
         tokenId
       );
-      count++;
     }
     if (currencies) currencies.push(currency.id);
   }
