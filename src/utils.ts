@@ -38,10 +38,10 @@ export function getERCType(address: Bytes): ERCType {
 }
 
 
-export function getCurrency(address: Bytes, type: ERCType, assetId: BigInt, tokenId: BigInt = ZERO_BI): Currency{
-    let currency = Currency.load(assetId.toString() + "-" +address.toHex());
+export function getCurrency(address: Bytes, type: ERCType, index: string, tokenId: BigInt = ZERO_BI): Currency{
+    let currency = Currency.load(index + "-" + address.toHex() + "-" + tokenId.toString());
     if(!currency){
-        currency = new Currency(assetId.toString() + "-" + address.toHex());
+        currency = new Currency(index + "-" + address.toHex() + "-" + tokenId.toString());
         currency.address = address;
         if(type == ERCType.ERC20){
             let erc20 = ERC20.bind(Address.fromBytes(address));

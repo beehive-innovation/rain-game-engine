@@ -72,7 +72,8 @@ describe("Rain1155 getCurrencyPrice test", () => {
         recipient: recipient.address,
         currencies: {
           token: [USDT.address],
-          tokenId: [],
+          tokenId: [0],
+          tokenType: [0]
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -84,7 +85,7 @@ describe("Rain1155 getCurrencyPrice test", () => {
     it("Should return correct currency price for single erc20", async () => {
       const price = await rain1155.getCurrencyPrice(
         1,
-        USDT.address,
+        0,
         buyer.address,
         1
       );
@@ -131,6 +132,7 @@ describe("Rain1155 getCurrencyPrice test", () => {
         currencies: {
           token: [PLANES.address],
           tokenId: [10],
+          tokenType: [1]
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -142,7 +144,7 @@ describe("Rain1155 getCurrencyPrice test", () => {
     it("Should return correct currency price for single erc1155", async () => {
       const price = await rain1155.getCurrencyPrice(
         1,
-        PLANES.address,
+        0,
         buyer.address,
         1
       );
@@ -151,8 +153,8 @@ describe("Rain1155 getCurrencyPrice test", () => {
 
     it("Should revert if  token is not in currencies", async () => {
       await expect(
-        rain1155.getCurrencyPrice(1, USDT.address, buyer.address, 1)
-      ).to.revertedWith("Invalid payment token");
+        rain1155.getCurrencyPrice(1, 2, buyer.address, 1)
+      ).to.revertedWith("invalid payment token");
     });
   });
 
@@ -220,7 +222,8 @@ describe("Rain1155 getCurrencyPrice test", () => {
         recipient: recipient.address,
         currencies: {
           token: [BNB.address, SOL.address, PLANES.address, CARS.address],
-          tokenId: [2, 4],
+          tokenId: [0, 0, 2, 4],
+          tokenType: [0, 0, 1, 1]
         },
         tokenURI: "TOKEN_URI",
         vmStateConfig: vmStateConfig_,
@@ -240,25 +243,25 @@ describe("Rain1155 getCurrencyPrice test", () => {
 
       const BNBPrice = await rain1155.getCurrencyPrice(
         1,
-        BNB.address,
+        0,
         buyer.address,
         1
       );
       const SOLPrice = await rain1155.getCurrencyPrice(
         1,
-        SOL.address,
+        1,
         buyer.address,
         1
       );
       const PLANESPrice = await rain1155.getCurrencyPrice(
         1,
-        PLANES.address,
+        2,
         buyer.address,
         1
       );
       const CARSPrice = await rain1155.getCurrencyPrice(
         1,
-        CARS.address,
+        3,
         buyer.address,
         1
       );

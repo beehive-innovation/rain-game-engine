@@ -63,7 +63,8 @@ describe("Rain1155 TokenURI test", () => {
       recipient: recipient.address,
       currencies: {
         token: [USDT.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,

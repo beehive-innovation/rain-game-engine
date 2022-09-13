@@ -94,7 +94,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -186,7 +187,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -247,7 +249,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -311,7 +314,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -412,7 +416,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address, TOKEN1155.address],
-        tokenId: [tokenIdToHold],
+        tokenId: [0, tokenIdToHold],
+        tokenType: [0, 1]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -541,7 +546,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -634,7 +640,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -726,7 +733,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address, TOKEN1155.address],
-        tokenId: [tokenIdToHold],
+        tokenId: [0, tokenIdToHold],
+        tokenType: [0, 1]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,
@@ -854,7 +862,8 @@ describe("Mint Asset test", async function () {
       recipient: recipient.address,
       currencies: {
         token: [USDT_.address],
-        tokenId: [],
+        tokenId: [0],
+        tokenType: [0]
       },
       tokenURI: "TOKEN_URI",
       vmStateConfig: vmStateConfig_,

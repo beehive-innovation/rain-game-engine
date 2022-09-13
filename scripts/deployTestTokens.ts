@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { eighteenZeros, fetchFile, writeFile } from "../test/utils"
+import { BN, eighteenZeros, fetchFile, writeFile } from "../test/utils"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import path from "path";
 
